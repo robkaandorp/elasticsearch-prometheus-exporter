@@ -34,9 +34,7 @@ import io.prometheus.client.exporter.common.TextFormat;
 import io.prometheus.client.hotspot.DefaultExports;
 
 import org.elasticsearch.SpecialPermission;
-
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
@@ -46,14 +44,14 @@ import java.security.PrivilegedExceptionAction;
 public class PrometheusMetricsCatalog {
     private static final Logger logger = LogManager.getLogger(RestPrometheusMetricsAction.class);
 
-    private String clusterName;
-    private String nodeName;
-    private String nodeId;
+    private final String clusterName;
+    private final String nodeName;
+    private final String nodeId;
 
-    private String metricPrefix;
+    private final String metricPrefix;
 
-    private HashMap<String, Object> metrics;
-    private CollectorRegistry registry;
+    private final HashMap<String, Object> metrics;
+    private final CollectorRegistry registry;
 
     public PrometheusMetricsCatalog(String clusterName, String nodeName, String nodeId, String metricPrefix) {
         this.clusterName = clusterName;

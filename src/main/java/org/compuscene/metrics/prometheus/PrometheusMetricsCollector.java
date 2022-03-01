@@ -49,9 +49,9 @@ import io.prometheus.client.Summary;
  */
 public class PrometheusMetricsCollector {
 
-    private boolean isPrometheusClusterSettings;
-    private boolean isPrometheusIndices;
-    private PrometheusMetricsCatalog catalog;
+    private final boolean isPrometheusClusterSettings;
+    private final boolean isPrometheusIndices;
+    private final PrometheusMetricsCatalog catalog;
 
     public PrometheusMetricsCollector(PrometheusMetricsCatalog catalog,
                                       boolean isPrometheusIndices,
