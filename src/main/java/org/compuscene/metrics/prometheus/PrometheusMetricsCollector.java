@@ -17,6 +17,8 @@
 
 package org.compuscene.metrics.prometheus;
 
+import io.prometheus.client.Summary;
+import org.elasticsearch.Build;
 import org.elasticsearch.action.ClusterStatsData;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.stats.NodeStats;
@@ -41,8 +43,6 @@ import org.elasticsearch.transport.TransportStats;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import io.prometheus.client.Summary;
 
 /**
  * A class that describes a Prometheus metrics collector.
@@ -125,6 +125,8 @@ public class PrometheusMetricsCollector {
 
     private void registerNodeMetrics() {
         catalog.registerNodeGauge("node_role_bool", "Node role", "role");
+        catalog.registerNodeInfo(
+                "node_version", "Node version", "version", "build_flavor", "build_type", "build_hash", "build_date");
     }
 
     private void updateNodeMetrics(NodeStats ns) {
@@ -145,6 +147,17 @@ public class PrometheusMetricsCollector {
             for (String k : roles.keySet()) {
                 catalog.setNodeGauge("node_role_bool", roles.get(k), k);
             }
+
+            // populate node version (different between nodes).
+            var build = Build.CURRENT;
+            catalog.setNodeInfo(
+                    "node_version",
+                    build.getQualifiedVersion(),
+                    build.flavor().displayName(),
+                    build.type().displayName(),
+                    build.hash(),
+                    build.date()
+            );
         }
     }
 

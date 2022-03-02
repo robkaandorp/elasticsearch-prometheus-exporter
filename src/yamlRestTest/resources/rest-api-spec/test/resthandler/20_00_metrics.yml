@@ -22,6 +22,8 @@
   - match:
       $body: /# HELP es_os_swap_total_bytes Total swap size\n# TYPE es_os_swap_total_bytes gauge\n.*/
 
+  - match:
+      $body: /.* es_node_version_info .*/
 
 #---
 #"Pull Prometheus metrics from individual nodes":

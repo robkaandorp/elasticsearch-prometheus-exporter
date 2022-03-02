@@ -29,6 +29,7 @@ import java.util.Locale;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
+import io.prometheus.client.Info;
 import io.prometheus.client.Summary;
 import io.prometheus.client.exporter.common.TextFormat;
 import io.prometheus.client.hotspot.DefaultExports;
@@ -120,6 +121,23 @@ public class PrometheusMetricsCatalog {
     public void setClusterGauge(String metric, double value, String... labelValues) {
         Gauge gauge = (Gauge) metrics.get(metric);
         gauge.labels(getExtendedClusterLabelValues(labelValues)).set(value);
+    }
+
+    public void registerNodeInfo(String metric, String help, String... labels) {
+        Info info = Info.build().
+                name(metricPrefix + metric).
+                help(help).
+                labelNames(getExtendedNodeLabelNames(labels)).
+                register(registry);
+
+        metrics.put(metric, info);
+
+        logger.debug(String.format(Locale.ENGLISH, "Registered new node info %s", metric));
+    }
+
+    public void setNodeInfo(String metric, String... labelValues) {
+        Info info = (Info) metrics.get(metric);
+        info.labels(getExtendedNodeLabelValues(labelValues));
     }
 
     public void registerNodeGauge(String metric, String help, String... labels) {
