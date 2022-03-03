@@ -25,6 +25,20 @@
   - match:
       $body: /.* es_node_version_info .*/
 
+---
+"Prometheus metrics can be pulled in OpenMetrics format":
+  - skip:
+      features: headers
+
+  - do:
+      prometheus.metrics: {}
+      headers:
+          Accept: application/openmetrics-text
+  # Output is pure text hence we need to rely solely on regex expressions.
+  # See: https://github.com/elastic/elasticsearch/tree/master/rest-api-spec/src/main/resources/rest-api-spec/test#test-file-structure
+
+  - match:
+      $body: /# UNIT es_cluster_shards_active_ratio ratio\n.*/
 #---
 #"Pull Prometheus metrics from individual nodes":
 #  - skip:

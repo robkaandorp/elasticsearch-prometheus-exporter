@@ -74,6 +74,12 @@ public class RestPrometheusMetricsAction extends BaseRestHandler {
                     remoteAddress));
         }
 
+        String acceptHeader = request.header("Accept");
+        if (logger.isTraceEnabled()) {
+            logger.trace(String.format(Locale.ENGLISH, "Request accept header %s",
+                    acceptHeader != null ? acceptHeader : "NONE"
+            ));
+        }
         NodePrometheusMetricsRequest metricsRequest = new NodePrometheusMetricsRequest();
 
         return channel -> client.execute(INSTANCE, metricsRequest,
@@ -96,7 +102,8 @@ public class RestPrometheusMetricsAction extends BaseRestHandler {
                 collector.registerMetrics();
                 collector.updateMetrics(response.getClusterHealth(), response.getNodeStats(), response.getIndicesStats(),
                         response.getClusterStatsData());
-                return new BytesRestResponse(RestStatus.OK, collector.getCatalog().toTextFormat());
+                String contentType = catalog.getContentType(acceptHeader);
+                return new BytesRestResponse(RestStatus.OK, contentType, catalog.toTextFormat(contentType));
             }
         });
     }

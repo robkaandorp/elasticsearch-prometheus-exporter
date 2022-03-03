@@ -19,25 +19,26 @@ package org.compuscene.metrics.prometheus;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.SpecialPermission;
 import org.elasticsearch.rest.prometheus.RestPrometheusMetricsAction;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Locale;
 
 import io.prometheus.client.CollectorRegistry;
+//import io.prometheus.client.Counter;
+import io.prometheus.client.Enumeration;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Info;
 import io.prometheus.client.Summary;
 import io.prometheus.client.exporter.common.TextFormat;
 import io.prometheus.client.hotspot.DefaultExports;
-
-import org.elasticsearch.SpecialPermission;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 
 /**
  * A class that describes a Prometheus metrics catalog.
@@ -106,9 +107,28 @@ public class PrometheusMetricsCatalog {
         return extended;
     }
 
-    public void registerClusterGauge(String metric, String help, String... labels) {
+    public void registerClusterEnum(String metric, String help, Class e, String... labels) {
+        Enumeration enumeration = Enumeration.build().
+                name(metricPrefix + metric).
+                help(help).
+                states(e).
+                labelNames(getExtendedClusterLabelNames(labels)).
+                register(registry);
+
+        metrics.put(metric, enumeration);
+
+        logger.debug(String.format(Locale.ENGLISH, "Registered new enumeration cluster %s", metric));
+    }
+
+    public void setClusterEnum(String metric, String state, String... labelValues) {
+        Enumeration enumeration = (Enumeration) metrics.get(metric);
+        enumeration.labels(getExtendedClusterLabelValues(labelValues)).state(state);
+    }
+
+    public void registerClusterGaugeUnit(String metric, String unit, String help, String... labels) {
         Gauge gauge = Gauge.build().
                 name(metricPrefix + metric).
+                unit(unit).
                 help(help).
                 labelNames(getExtendedClusterLabelNames(labels)).
                 register(registry);
@@ -116,6 +136,10 @@ public class PrometheusMetricsCatalog {
         metrics.put(metric, gauge);
 
         logger.debug(String.format(Locale.ENGLISH, "Registered new cluster gauge %s", metric));
+    }
+
+    public void registerClusterGauge(String metric, String help, String... labels) {
+        registerClusterGaugeUnit(metric, "", help, labels);
     }
 
     public void setClusterGauge(String metric, double value, String... labelValues) {
@@ -174,12 +198,16 @@ public class PrometheusMetricsCatalog {
         return summary.labels(getExtendedNodeLabelValues(labelValues)).startTimer();
     }
 
-    public String toTextFormat() throws IOException {
+    public String getContentType(String acceptHeader) {
+        return TextFormat.chooseContentType(acceptHeader);
+    }
+
+    public String toTextFormat(String contentType) throws IOException {
         Writer writer = new StringWriter();
         SpecialPermission.check();
         try {
             AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-                TextFormat.write004(writer, registry.metricFamilySamples());
+                TextFormat.writeFormat(contentType, writer, registry.metricFamilySamples());
                 return null;
             });
         } catch (PrivilegedActionException e) {
