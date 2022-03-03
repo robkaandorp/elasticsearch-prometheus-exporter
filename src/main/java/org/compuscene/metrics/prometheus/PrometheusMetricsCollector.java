@@ -861,11 +861,12 @@ public class PrometheusMetricsCollector {
             }
 
             if (os.getMem() != null) {
-                catalog.setNodeGauge("os_mem_free_bytes", os.getMem().getFree().getBytes());
-                catalog.setNodeGauge("os_mem_free_percent", os.getMem().getFreePercent());
-                catalog.setNodeGauge("os_mem_used_bytes", os.getMem().getUsed().getBytes());
-                catalog.setNodeGauge("os_mem_used_percent", os.getMem().getUsedPercent());
-                catalog.setNodeGauge("os_mem_total_bytes", os.getMem().getTotal().getBytes());
+                final var mem = os.getMem();
+                catalog.setNodeGauge("os_mem_free_bytes", mem.getFree().getBytes());
+                catalog.setNodeGauge("os_mem_free_percent", mem.getFreePercent());
+                catalog.setNodeGauge("os_mem_used_bytes", mem.getUsed().getBytes());
+                catalog.setNodeGauge("os_mem_used_percent", mem.getUsedPercent());
+                catalog.setNodeGauge("os_mem_total_bytes", mem.getTotal().getBytes());
             }
 
             if (os.getSwap() != null) {
