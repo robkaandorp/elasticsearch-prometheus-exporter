@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Locale;
 
 import io.prometheus.client.CollectorRegistry;
-//import io.prometheus.client.Counter;
+import io.prometheus.client.Counter;
 import io.prometheus.client.Enumeration;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Info;
@@ -164,9 +164,10 @@ public class PrometheusMetricsCatalog {
         info.labels(getExtendedNodeLabelValues(labelValues));
     }
 
-    public void registerNodeGauge(String metric, String help, String... labels) {
+    public void registerNodeGaugeUnit(String metric, String unit, String help, String... labels) {
         Gauge gauge = Gauge.build().
                 name(metricPrefix + metric).
+                unit(unit).
                 help(help).
                 labelNames(getExtendedNodeLabelNames(labels)).
                 register(registry);
@@ -176,9 +177,35 @@ public class PrometheusMetricsCatalog {
         logger.debug(String.format(Locale.ENGLISH, "Registered new node gauge %s", metric));
     }
 
+    public void registerNodeGauge(String metric, String help, String... labels) {
+        registerNodeGaugeUnit(metric, "", help, labels);
+    }
+
     public void setNodeGauge(String metric, double value, String... labelValues) {
         Gauge gauge = (Gauge) metrics.get(metric);
         gauge.labels(getExtendedNodeLabelValues(labelValues)).set(value);
+    }
+
+    public void registerNodeCounterUnit(String metric, String unit, String help, String... labels) {
+        Counter counter = Counter.build().
+                name(metricPrefix + metric).
+                unit(unit).
+                help(help).
+                labelNames(getExtendedNodeLabelNames(labels)).
+                register(registry);
+
+        metrics.put(metric, counter);
+
+        logger.debug(String.format(Locale.ENGLISH, "Registered new node counter %s", metric));
+    }
+
+    public void registerNodeCounter(String metric, String help, String... labels) {
+        registerNodeCounterUnit(metric, "", help, labels);
+    }
+
+    public void setNodeCounter(String metric, double value, String... labelValues) {
+        Counter counter = (Counter) metrics.get(metric);
+        counter.labels(getExtendedNodeLabelValues(labelValues)).inc(value);
     }
 
     public void registerSummaryTimer(String metric, String help, String... labels) {
