@@ -999,35 +999,44 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerFsMetrics() {
-        catalog.registerNodeGauge("fs_total_total_bytes", "Total disk space for all mount points");
-        catalog.registerNodeGauge("fs_total_available_bytes", "Available disk space for all mount points");
-        catalog.registerNodeGauge("fs_total_free_bytes", "Free disk space for all mountpoints");
+        catalog.registerNodeGaugeUnit("fs_total_total", "bytes", "Total size of all file stores (mount points)");
+        catalog.registerNodeGaugeUnit("fs_total_available", "bytes", "Total number of bytes available to this Java virtual machine on all file stores. Depending on OS or process level restrictions, this might appear less than free_in_bytes. This is the actual amount of free disk space the Elasticsearch node can utilise (mount points)");
+        catalog.registerNodeGaugeUnit("fs_total_free", "bytes", "Total number of unallocated bytes in all file stores.");
 
-        catalog.registerNodeGauge("fs_path_total_bytes", "Total disk space", "path", "mount", "type");
-        catalog.registerNodeGauge("fs_path_available_bytes", "Available disk space", "path", "mount", "type");
-        catalog.registerNodeGauge("fs_path_free_bytes", "Free disk space", "path", "mount", "type");
+        catalog.registerNodeGaugeUnit("fs_path_total", "bytes", "Total size (in bytes) of the file store", "path", "mount", "type");
+        catalog.registerNodeGaugeUnit("fs_path_available", "bytes", "Total number of bytes available to this Java virtual machine on this file store", "path", "mount", "type");
+        catalog.registerNodeGaugeUnit("fs_path_free", "bytes", "Total number of unallocated bytes in the file store", "path", "mount", "type");
 
-        catalog.registerNodeGauge("fs_io_total_operations", "Total IO operations");
-        catalog.registerNodeGauge("fs_io_total_read_operations", "Total IO read operations");
-        catalog.registerNodeGauge("fs_io_total_write_operations", "Total IO write operations");
-        catalog.registerNodeGauge("fs_io_total_read_bytes", "Total IO read bytes");
-        catalog.registerNodeGauge("fs_io_total_write_bytes", "Total IO write bytes");
+        catalog.registerNodeGauge("fs_io_total_operations", "The total number of read and write operations across all devices used by Elasticsearch completed since starting Elasticsearch");
+        catalog.registerNodeGauge("fs_io_total_read_operations", "The total number of read operations for across all devices used by Elasticsearch completed since starting Elasticsearch");
+        catalog.registerNodeGauge("fs_io_total_write_operations", "The total number of write operations across all devices used by Elasticsearch completed since starting Elasticsearch");
+        catalog.registerNodeGaugeUnit("fs_io_total_read", "bytes", "The total number of bytes read across all devices used by Elasticsearch since starting Elasticsearch.");
+        catalog.registerNodeGaugeUnit("fs_io_total_write", "bytes", "The total number of bytes written across all devices used by Elasticsearch since starting Elasticsearch");
+        catalog.registerNodeCounterUnit("fs_io_total_io_time", "seconds", "The total time in seconds spent performing I/O operations across all devices used by Elasticsearch since starting Elasticsearch");
+
+        catalog.registerNodeCounter("fs_io_device_operations", "The total number of read and write operations for the device completed since starting Elasticsearch", "device");
+        catalog.registerNodeCounter("fs_io_device_read_operations", "The total number of read operations for the device completed since starting Elasticsearch", "device");
+        catalog.registerNodeCounter("fs_io_device_write_operations", "The total number of write operations for the device completed since starting Elasticsearch", "device");
+        catalog.registerNodeCounterUnit("fs_io_device_read", "bytes", "The total number of bytes read for the device since starting Elasticsearch", "device");
+        catalog.registerNodeCounterUnit("fs_io_device_write", "bytes", "The total number of bytes written for the device since starting Elasticsearch", "device");
+        catalog.registerNodeCounterUnit("fs_io_device_io_time", "seconds", "The total time in seconds spent performing I/O operations across all devices", "device");
     }
 
     private void updateFsMetrics(FsInfo fs) {
         if (fs != null) {
-            catalog.setNodeGauge("fs_total_total_bytes", fs.getTotal().getTotal().getBytes());
-            catalog.setNodeGauge("fs_total_available_bytes", fs.getTotal().getAvailable().getBytes());
-            catalog.setNodeGauge("fs_total_free_bytes", fs.getTotal().getFree().getBytes());
+            catalog.setNodeGauge("fs_total_total", fs.getTotal().getTotal().getBytes());
+            catalog.setNodeGauge("fs_total_available", fs.getTotal().getAvailable().getBytes());
+            catalog.setNodeGauge("fs_total_free", fs.getTotal().getFree().getBytes());
 
             for (FsInfo.Path fspath : fs) {
                 String path = fspath.getPath();
                 String mount = fspath.getMount();
                 String type = fspath.getType();
-                catalog.setNodeGauge("fs_path_total_bytes", fspath.getTotal().getBytes(), path, mount, type);
-                catalog.setNodeGauge("fs_path_available_bytes", fspath.getAvailable().getBytes(), path, mount, type);
-                catalog.setNodeGauge("fs_path_free_bytes", fspath.getFree().getBytes(), path, mount, type);
+                catalog.setNodeGauge("fs_path_total", fspath.getTotal().getBytes(), path, mount, type);
+                catalog.setNodeGauge("fs_path_available", fspath.getAvailable().getBytes(), path, mount, type);
+                catalog.setNodeGauge("fs_path_free", fspath.getFree().getBytes(), path, mount, type);
             }
 
             FsInfo.IoStats ioStats = fs.getIoStats();
@@ -1035,8 +1044,27 @@ public class PrometheusMetricsCollector {
                 catalog.setNodeGauge("fs_io_total_operations", fs.getIoStats().getTotalOperations());
                 catalog.setNodeGauge("fs_io_total_read_operations", fs.getIoStats().getTotalReadOperations());
                 catalog.setNodeGauge("fs_io_total_write_operations", fs.getIoStats().getTotalWriteOperations());
-                catalog.setNodeGauge("fs_io_total_read_bytes", fs.getIoStats().getTotalReadKilobytes() * 1024);
-                catalog.setNodeGauge("fs_io_total_write_bytes", fs.getIoStats().getTotalWriteKilobytes() * 1024);
+                catalog.setNodeGauge("fs_io_total_read", fs.getIoStats().getTotalReadKilobytes() * 1024);
+                catalog.setNodeGauge("fs_io_total_write", fs.getIoStats().getTotalWriteKilobytes() * 1024);
+                catalog.setNodeCounter("fs_io_total_io_time", ioStats.getTotalIOTimeMillis() / 1E3);
+                for (FsInfo.DeviceStats dev : ioStats.getDevicesStats()) {
+                    try {
+                        // elastic doesn't provide an accessor for the device name.
+                        var obj = dev.getClass();
+                        Field field = obj.getDeclaredField("deviceName");
+                        field.setAccessible(true);
+                        String deviceName = (String) field.get(dev);
+
+                        catalog.setNodeCounter("fs_io_device_operations", dev.operations(), deviceName);
+                        catalog.setNodeCounter("fs_io_device_read_operations", dev.readOperations(), deviceName);
+                        catalog.setNodeCounter("fs_io_device_write_operations", dev.writeOperations(), deviceName);
+                        catalog.setNodeCounter("fs_io_device_read", dev.readKilobytes() * 1024, deviceName);
+                        catalog.setNodeCounter("fs_io_device_write", dev.writeKilobytes() * 1024, deviceName);
+                        catalog.setNodeCounter("fs_io_device_io_time", dev.ioTimeInMillis() / 1E3, deviceName);
+                    } catch (NoSuchFieldException | IllegalAccessException e) {
+                        logger.info("failed to access deviceName", e);
+                    }
+                }
             }
         }
     }
