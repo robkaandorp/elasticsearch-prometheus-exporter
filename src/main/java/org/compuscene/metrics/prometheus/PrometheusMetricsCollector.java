@@ -688,10 +688,18 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerThreadPoolMetrics() {
-        catalog.registerNodeGauge("threadpool_threads_number", "Number of threads in thread pool", "name", "type");
-        catalog.registerNodeGauge("threadpool_threads_count", "Count of threads in thread pool", "name", "type");
-        catalog.registerNodeGauge("threadpool_tasks_number", "Number of tasks in thread pool", "name", "type");
+        catalog.registerNodeGauge("threadpool_threads_number", "DEPRECATED: Number of threads in the thread pool", "name", "type");
+        catalog.registerNodeGauge("threadpool_threads_count", "DEPRECATED: Count of threads in thread pool", "name", "type");
+        catalog.registerNodeGauge("threadpool_tasks_number", "DEPRECATED: Number of tasks in thread pool", "name", "type");
+
+        catalog.registerNodeGauge("threadpool_threads", "Number of threads in the thread pool", "name");
+        catalog.registerNodeGauge("threadpool_queue", "Number of tasks in queue for the thread pool", "name");
+        catalog.registerNodeGauge("threadpool_active", "Number of active threads in the thread pool", "name");
+        catalog.registerNodeGauge("threadpool_largest", "Highest number of active threads in the thread pool", "name");
+        catalog.registerNodeCounter("threadpool_rejected", "Total number of tasks rejected by the thread pool executor", "name");
+        catalog.registerNodeCounter("threadpool_completed", "Total Number of tasks completed by the thread pool executor", "name");
     }
 
     private void updateThreadPoolMetrics(ThreadPoolStats tps) {
@@ -699,11 +707,18 @@ public class PrometheusMetricsCollector {
             for (ThreadPoolStats.Stats st : tps) {
                 String name = st.getName();
                 catalog.setNodeGauge("threadpool_threads_number", st.getThreads(), name, "threads");
+                catalog.setNodeGauge("threadpool_tasks_number", st.getQueue(), name, "queue");
                 catalog.setNodeGauge("threadpool_threads_number", st.getActive(), name, "active");
                 catalog.setNodeGauge("threadpool_threads_number", st.getLargest(), name, "largest");
                 catalog.setNodeGauge("threadpool_threads_count", st.getCompleted(), name, "completed");
                 catalog.setNodeGauge("threadpool_threads_count", st.getRejected(), name, "rejected");
-                catalog.setNodeGauge("threadpool_tasks_number", st.getQueue(), name, "queue");
+
+                catalog.setNodeGauge("threadpool_threads", st.getThreads(), name);
+                catalog.setNodeGauge("threadpool_queue", st.getQueue(), name);
+                catalog.setNodeGauge("threadpool_active", st.getActive(), name);
+                catalog.setNodeGauge("threadpool_largest", st.getLargest(), name);
+                catalog.setNodeCounter("threadpool_rejected", st.getCompleted(), name);
+                catalog.setNodeCounter("threadpool_completed", st.getRejected(), name);
             }
         }
     }
