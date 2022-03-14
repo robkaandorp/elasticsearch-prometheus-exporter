@@ -774,19 +774,20 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerCircuitBreakerMetrics() {
-        catalog.registerNodeGauge("circuitbreaker_estimated_bytes", "Circuit breaker estimated size", "name");
-        catalog.registerNodeGauge("circuitbreaker_limit_bytes", "Circuit breaker size limit", "name");
-        catalog.registerNodeGauge("circuitbreaker_overhead_ratio", "Circuit breaker overhead ratio", "name");
-        catalog.registerNodeGauge("circuitbreaker_tripped_count", "Circuit breaker tripped count", "name");
+        catalog.registerNodeGaugeUnit("circuitbreaker_estimated", "bytes", "Estimated memory used, in bytes, for the operation", "name");
+        catalog.registerNodeGaugeUnit("circuitbreaker_limit", "bytes", "Memory limit, in bytes, for the circuit breaker", "name");
+        catalog.registerNodeGauge("circuitbreaker_overhead_ratio", "A constant that all estimates for the circuit breaker are multiplied with to calculate a final estimate", "name");
+        catalog.registerNodeGauge("circuitbreaker_tripped_count", "Total number of times the circuit breaker has been triggered and prevented an out of memory error", "name");
     }
 
     private void updateCircuitBreakersMetrics(AllCircuitBreakerStats acbs) {
         if (acbs != null) {
             for (CircuitBreakerStats cbs : acbs.getAllStats()) {
                 String name = cbs.getName();
-                catalog.setNodeGauge("circuitbreaker_estimated_bytes", cbs.getEstimated(), name);
-                catalog.setNodeGauge("circuitbreaker_limit_bytes", cbs.getLimit(), name);
+                catalog.setNodeGauge("circuitbreaker_estimated", cbs.getEstimated(), name);
+                catalog.setNodeGauge("circuitbreaker_limit", cbs.getLimit(), name);
                 catalog.setNodeGauge("circuitbreaker_overhead_ratio", cbs.getOverhead(), name);
                 catalog.setNodeGauge("circuitbreaker_tripped_count", cbs.getTrippedCount(), name);
             }
