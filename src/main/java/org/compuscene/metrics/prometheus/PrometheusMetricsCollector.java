@@ -727,34 +727,34 @@ public class PrometheusMetricsCollector {
 
     @SuppressWarnings("checkstyle:LineLength")
     private void registerIngestMetrics() {
-        catalog.registerNodeGauge("ingest_total_count", "Ingestion total number");
-        catalog.registerNodeGauge("ingest_total_time_seconds", "Ingestion total time in seconds");
-        catalog.registerNodeGauge("ingest_total_current", "Ingestion total current");
-        catalog.registerNodeGauge("ingest_total_failed_count", "Ingestion total failed");
+        catalog.registerNodeGauge("ingest_total_count", "Total number of documents ingested during the lifetime of this node");
+        catalog.registerNodeGaugeUnit("ingest_total_time", "seconds", "Total time, in seconds, spent preprocessing ingest documents during the lifetime of this node");
+        catalog.registerNodeGauge("ingest_total_current", "Total number of documents currently being ingested");
+        catalog.registerNodeGauge("ingest_total_failed_count", "Total number of failed ingest operations during the lifetime of this node");
 
-        catalog.registerNodeGauge("ingest_pipeline_total_count", "Ingestion total number", "pipeline");
-        catalog.registerNodeGauge("ingest_pipeline_total_time_seconds", "Ingestion total time in seconds", "pipeline");
-        catalog.registerNodeGauge("ingest_pipeline_total_current", "Ingestion total current", "pipeline");
-        catalog.registerNodeGauge("ingest_pipeline_total_failed_count", "Ingestion total failed", "pipeline");
+        catalog.registerNodeGauge("ingest_pipeline_total_count", "Total Number of documents preprocessed by the ingest pipeline", "pipeline");
+        catalog.registerNodeGaugeUnit("ingest_pipeline_total_time", "seconds", "Total time, in seconds, spent preprocessing documents in the ingest pipeline", "pipeline");
+        catalog.registerNodeGauge("ingest_pipeline_total_current", "Number of documents currently being ingested by the ingest pipeline", "pipeline");
+        catalog.registerNodeGauge("ingest_pipeline_total_failed_count", "Total number of failed operations for the ingest pipeline", "pipeline");
 
-        catalog.registerNodeGauge("ingest_pipeline_processor_total_count", "Ingestion total number", "pipeline", "processor");
-        catalog.registerNodeGauge("ingest_pipeline_processor_total_time_seconds", "Ingestion total time in seconds", "pipeline", "processor");
-        catalog.registerNodeGauge("ingest_pipeline_processor_total_current", "Ingestion total current", "pipeline", "processor");
-        catalog.registerNodeGauge("ingest_pipeline_processor_total_failed_count", "Ingestion total failed", "pipeline", "processor");
+        catalog.registerNodeGauge("ingest_pipeline_processor_total_count", "Total Number of documents transformed by the processor", "pipeline", "processor");
+        catalog.registerNodeGaugeUnit("ingest_pipeline_processor_total_time", "seconds", "Total time, in seconds, spent by the processor transforming documents", "pipeline", "processor");
+        catalog.registerNodeGauge("ingest_pipeline_processor_total_current", "Number of documents currently being transformed by the processor", "pipeline", "processor");
+        catalog.registerNodeGauge("ingest_pipeline_processor_total_failed_count", "Total number of failed operations for the processor", "pipeline", "processor");
     }
 
     @SuppressWarnings("checkstyle:LineLength")
     private void updateIngestMetrics(IngestStats is) {
         if (is != null) {
             catalog.setNodeGauge("ingest_total_count", is.getTotalStats().getIngestCount());
-            catalog.setNodeGauge("ingest_total_time_seconds", is.getTotalStats().getIngestTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("ingest_total_time", is.getTotalStats().getIngestTimeInMillis() / 1E3);
             catalog.setNodeGauge("ingest_total_current", is.getTotalStats().getIngestCurrent());
             catalog.setNodeGauge("ingest_total_failed_count", is.getTotalStats().getIngestFailedCount());
 
             for (IngestStats.PipelineStat st : is.getPipelineStats()) {
                 String pipeline = st.getPipelineId();
                 catalog.setNodeGauge("ingest_pipeline_total_count", st.getStats().getIngestCount(), pipeline);
-                catalog.setNodeGauge("ingest_pipeline_total_time_seconds", st.getStats().getIngestTimeInMillis() / 1000.0,
+                catalog.setNodeGauge("ingest_pipeline_total_time", st.getStats().getIngestTimeInMillis() / 1E3,
                         pipeline);
                 catalog.setNodeGauge("ingest_pipeline_total_current", st.getStats().getIngestCurrent(), pipeline);
                 catalog.setNodeGauge("ingest_pipeline_total_failed_count", st.getStats().getIngestFailedCount(), pipeline);
@@ -764,7 +764,7 @@ public class PrometheusMetricsCollector {
                     for (IngestStats.ProcessorStat ps : pss) {
                         String processor = ps.getName();
                         catalog.setNodeGauge("ingest_pipeline_processor_total_count", ps.getStats().getIngestCount(), pipeline, processor);
-                        catalog.setNodeGauge("ingest_pipeline_processor_total_time_seconds", ps.getStats().getIngestTimeInMillis() / 1000.0,
+                        catalog.setNodeGauge("ingest_pipeline_processor_total_time", ps.getStats().getIngestTimeInMillis() / 1E3,
                                 pipeline, processor);
                         catalog.setNodeGauge("ingest_pipeline_processor_total_current", ps.getStats().getIngestCurrent(), pipeline, processor);
                         catalog.setNodeGauge("ingest_pipeline_processor_total_failed_count", ps.getStats().getIngestFailedCount(), pipeline, processor);
