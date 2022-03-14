@@ -677,14 +677,16 @@ public class PrometheusMetricsCollector {
     }
 
     private void registerHTTPMetrics() {
-        catalog.registerNodeGauge("http_open_server_number", "Number of open server connections");
-        catalog.registerNodeGauge("http_open_total_count", "Count of opened connections");
+        catalog.registerNodeGauge("http_open_server_number", "Current number of open HTTP connections for the node");
+        catalog.registerNodeGauge("http_open_total_count", "Total number of HTTP connections opened for the node");
+        catalog.registerNodeCounter("http_opened", "Total number of HTTP connections opened for the node");
     }
 
     private void updateHTTPMetrics(HttpStats http) {
         if (http != null) {
             catalog.setNodeGauge("http_open_server_number", http.getServerOpen());
             catalog.setNodeGauge("http_open_total_count", http.getTotalOpen());
+            catalog.setNodeCounter("http_opened", http.getTotalOpen());
         }
     }
 
