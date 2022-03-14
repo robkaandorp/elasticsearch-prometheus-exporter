@@ -1179,8 +1179,4 @@ public class PrometheusMetricsCollector {
 
         timer.observeDuration();
     }
-
-    public PrometheusMetricsCatalog getCatalog() {
-        return catalog;
-    }
 }
