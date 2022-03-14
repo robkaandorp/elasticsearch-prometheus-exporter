@@ -31,6 +31,7 @@ import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.health.ClusterIndexHealth;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.http.HttpStats;
+import org.elasticsearch.index.stats.IndexingPressureStats;
 import org.elasticsearch.indices.NodeIndicesStats;
 import org.elasticsearch.indices.breaker.AllCircuitBreakerStats;
 import org.elasticsearch.indices.breaker.CircuitBreakerStats;
@@ -88,6 +89,7 @@ public class PrometheusMetricsCollector {
         registerOsMetrics();
         registerFsMetrics();
         registerESSettings();
+        registerIndexingPressure();
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -1100,6 +1102,56 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
+    private void registerIndexingPressure() {
+        catalog.registerNodeGaugeUnit("indexing_pressure_memory_current_combined_coordinating_and_primary", "bytes", "Memory consumed, in bytes, by indexing requests in the coordinating or primary stage. This value is not the sum of coordinating and primary as a node can reuse the coordinating memory if the primary stage is executed locally");
+        catalog.registerNodeGaugeUnit("indexing_pressure_memory_current_coordinating", "bytes", "Memory consumed, in bytes, by indexing requests in the coordinating stage");
+        catalog.registerNodeGaugeUnit("indexing_pressure_memory_current_primary", "bytes", "Memory consumed, in bytes, by indexing requests in the primary stage");
+        catalog.registerNodeGaugeUnit("indexing_pressure_memory_current_replica", "bytes", "Memory consumed, in bytes, by indexing requests in the replica stage");
+        catalog.registerNodeGaugeUnit("indexing_pressure_memory_current_all", "bytes", "Memory consumed, in bytes, by indexing requests in the coordinating, primary, or replica stage");
+
+        catalog.registerNodeCounterUnit("indexing_pressure_memory_combined_coordinating_and_primary", "bytes", "Total memory consumed, in bytes, by indexing requests in the coordinating or primary stage. This value is not the sum of coordinating and primary as a node can reuse the coordinating memory if the primary stage is executed locally");
+        catalog.registerNodeCounterUnit("indexing_pressure_memory_coordinating", "bytes", "Total cumulative memory consumed, in bytes, by indexing requests in the coordinating stage ");
+        catalog.registerNodeCounterUnit("indexing_pressure_memory_primary", "bytes", "Total cumulative Memory consumed, in bytes, by indexing requests in the primary stage");
+        catalog.registerNodeCounterUnit("indexing_pressure_memory_replica", "bytes", "Total cumulative Memory consumed, in bytes, by indexing requests in the replica stage");
+        catalog.registerNodeCounterUnit("indexing_pressure_memory_all", "bytes", "Total cumulative Memory consumed, in bytes, by indexing requests in the coordinating, primary, or replica stage");
+        catalog.registerNodeCounter("indexing_pressure_memory_coordinating_rejections", "Total number of indexing requests rejected in the coordinating stage");
+        catalog.registerNodeCounter("indexing_pressure_memory_primary_rejections", "Total number of indexing requests rejected in the primary stage");
+        catalog.registerNodeCounter("indexing_pressure_memory_replica_rejections", "Total number of indexing requests rejected in the replica stage");
+
+        catalog.registerNodeGaugeUnit("indexing_pressure_memory", "bytes", "Configured memory limit, in bytes, for the indexing requests. Replica requests have an automatic limit that is 1.5x this value");
+    }
+
+    @SuppressWarnings("checkstyle:LineLength")
+    public void updateIndexingPressure(IndexingPressureStats ips) {
+        if (ips != null) {
+            catalog.setNodeGauge("indexing_pressure_memory_current_combined_coordinating_and_primary", ips.getCurrentCombinedCoordinatingAndPrimaryBytes());
+            catalog.setNodeGauge("indexing_pressure_memory_current_coordinating", ips.getCurrentCoordinatingBytes());
+            catalog.setNodeGauge("indexing_pressure_memory_current_primary", ips.getCurrentPrimaryBytes());
+            catalog.setNodeGauge("indexing_pressure_memory_current_replica", ips.getCurrentReplicaBytes());
+            catalog.setNodeGauge("indexing_pressure_memory_current_all", ips.getCurrentReplicaBytes() + ips.getCurrentCombinedCoordinatingAndPrimaryBytes());
+
+            catalog.setNodeCounter("indexing_pressure_memory_combined_coordinating_and_primary", ips.getTotalCombinedCoordinatingAndPrimaryBytes());
+            catalog.setNodeCounter("indexing_pressure_memory_coordinating", ips.getTotalCoordinatingBytes());
+            catalog.setNodeCounter("indexing_pressure_memory_primary", ips.getTotalPrimaryBytes());
+            catalog.setNodeCounter("indexing_pressure_memory_replica", ips.getTotalReplicaBytes());
+            catalog.setNodeCounter("indexing_pressure_memory_all", ips.getTotalReplicaBytes() + ips.getTotalCombinedCoordinatingAndPrimaryBytes());
+            catalog.setNodeCounter("indexing_pressure_memory_coordinating_rejections", ips.getCoordinatingRejections());
+            catalog.setNodeCounter("indexing_pressure_memory_primary_rejections", ips.getPrimaryRejections());
+            catalog.setNodeCounter("indexing_pressure_memory_replica_rejections", ips.getReplicaRejections());
+
+            try {
+                // elastic doesn't provide an accessor for the memory limit
+                var obj = ips.getClass();
+                Field field = obj.getDeclaredField("memoryLimit");
+                field.setAccessible(true);
+                long memoryLimit = (long) field.get(ips);
+                catalog.setNodeGauge("indexing_pressure_memory", memoryLimit);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                logger.info("failed to access totalOutboundConnections", e);
+            }
+        }
+    }
     public void updateMetrics(ClusterHealthResponse clusterHealthResponse, NodeStats nodeStats,
                               IndicesStatsResponse indicesStats, ClusterStatsData clusterStatsData) {
         Summary.Timer timer = catalog.startSummaryTimer("metrics_generate_time_seconds");
@@ -1120,6 +1172,7 @@ public class PrometheusMetricsCollector {
         updateJVMMetrics(nodeStats.getJvm());
         updateOsMetrics(nodeStats.getOs());
         updateFsMetrics(nodeStats.getFs());
+        updateIndexingPressure(nodeStats.getIndexingPressureStats());
         if (isPrometheusClusterSettings) {
             updateESSettings(clusterStatsData);
         }
