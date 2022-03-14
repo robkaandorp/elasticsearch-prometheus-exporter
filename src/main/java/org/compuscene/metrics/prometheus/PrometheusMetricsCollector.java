@@ -17,6 +17,9 @@
 
 package org.compuscene.metrics.prometheus;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.elasticsearch.Build;
 import org.elasticsearch.action.ClusterStatsData;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -36,6 +39,7 @@ import org.elasticsearch.monitor.fs.FsInfo;
 import org.elasticsearch.monitor.jvm.JvmStats;
 import org.elasticsearch.monitor.os.OsStats;
 import org.elasticsearch.monitor.process.ProcessStats;
+import org.elasticsearch.rest.prometheus.RestPrometheusMetricsAction;
 import org.elasticsearch.script.ScriptStats;
 import org.elasticsearch.threadpool.ThreadPoolStats;
 import org.elasticsearch.transport.TransportStats;
@@ -50,6 +54,7 @@ import io.prometheus.client.Summary;
  * A class that describes a Prometheus metrics collector.
  */
 public class PrometheusMetricsCollector {
+    private static final Logger logger = LogManager.getLogger(RestPrometheusMetricsAction.class);
 
     private final boolean isPrometheusClusterSettings;
     private final boolean isPrometheusIndices;
