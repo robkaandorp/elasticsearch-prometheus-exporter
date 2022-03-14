@@ -794,15 +794,18 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerScriptMetrics() {
-        catalog.registerNodeGauge("script_cache_evictions_count", "Number of evictions in scripts cache");
-        catalog.registerNodeGauge("script_compilations_count", "Number of scripts compilations");
+        catalog.registerNodeGauge("script_cache_evictions_count", "Total number of times the script cache has evicted old data");
+        catalog.registerNodeGauge("script_compilations_count", "Total number of inline script compilations performed by the node");
+        catalog.registerNodeCounter("script_compilations_limit_triggered", "Total number of times the script compilation circuit breaker has limited inline script compilations.");
     }
 
     private void updateScriptMetrics(ScriptStats sc) {
         if (sc != null) {
             catalog.setNodeGauge("script_cache_evictions_count", sc.getCacheEvictions());
             catalog.setNodeGauge("script_compilations_count", sc.getCompilations());
+            catalog.setNodeCounter("script_compilations_limit_triggered", sc.getCompilationLimitTriggered());
         }
     }
 
