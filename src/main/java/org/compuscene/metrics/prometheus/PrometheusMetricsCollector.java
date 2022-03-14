@@ -922,24 +922,36 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerOsMetrics() {
-        catalog.registerNodeGauge("os_cpu_percent", "CPU usage in percent");
+        catalog.registerNodeGauge("os_cpu_percent", "Recent CPU usage for the whole system");
 
-        catalog.registerNodeGauge("os_load_average_one_minute", "CPU load");
-        catalog.registerNodeGauge("os_load_average_five_minutes", "CPU load");
-        catalog.registerNodeGauge("os_load_average_fifteen_minutes", "CPU load");
+        catalog.registerNodeGauge("os_load_average_one_minute", "One-minute load average on the system");
+        catalog.registerNodeGauge("os_load_average_five_minutes", "Five-minute load average on the system");
+        catalog.registerNodeGauge("os_load_average_fifteen_minutes", "Fifteen-minute load average on the system");
 
-        catalog.registerNodeGauge("os_mem_free_bytes", "Memory free");
-        catalog.registerNodeGauge("os_mem_free_percent", "Memory free in percent");
-        catalog.registerNodeGauge("os_mem_used_bytes", "Memory used");
-        catalog.registerNodeGauge("os_mem_used_percent", "Memory used in percent");
-        catalog.registerNodeGauge("os_mem_total_bytes", "Total memory size");
+        catalog.registerNodeGaugeUnit("os_mem_free", "bytes", "Amount of free physical memory in bytes");
+        catalog.registerNodeGauge("os_mem_free_percent", "Percentage of free memory");
+        catalog.registerNodeGaugeUnit("os_mem_used", "bytes", "Amount of used physical memory in bytes");
+        catalog.registerNodeGauge("os_mem_used_percent", "Percentage of used memory");
+        catalog.registerNodeGaugeUnit("os_mem_total", "bytes", "Total amount of physical memory in bytes");
 
-        catalog.registerNodeGauge("os_swap_free_bytes", "Swap free");
-        catalog.registerNodeGauge("os_swap_used_bytes", "Swap used");
-        catalog.registerNodeGauge("os_swap_total_bytes", "Total swap size");
+        catalog.registerNodeGaugeUnit("os_swap_free", "bytes", "Amount of free swap space in bytes");
+        catalog.registerNodeGaugeUnit("os_swap_used", "bytes", "Amount of used swap space in bytes");
+        catalog.registerNodeGaugeUnit("os_swap_total", "bytes", "Total amount of swap space in bytes");
+
+        catalog.registerNodeInfo("os_cgroup_control_group", "The cpuacct control group to which the Elasticsearch process belongs", "group", "path");
+        catalog.registerNodeGaugeUnit("os_cgroup_cpuacct_usage", "seconds", "The total CPU time (in seconds) consumed by all tasks in the same cgroup as the Elasticsearch process");
+        catalog.registerNodeGaugeUnit("os_cgroup_cpu_cfs_period", "seconds", "The period of time (in seconds) for how regularly all tasks in the same cgroup as the Elasticsearch process should have their access to CPU resources reallocated");
+        catalog.registerNodeGaugeUnit("os_cgroup_cpu_cfs_quota", "seconds", "The total amount of time (in seconds) for which all tasks in the same cgroup as the Elasticsearch process can run during one period cfs_period_micros");
+        catalog.registerNodeGauge("os_cgroup_cpu_cfs_stat_number_of_elapsed_periods", "The number of reporting periods (as specified by cfs_period_micros) that have elapsed");
+        catalog.registerNodeGauge("os_cgroup_cpu_cfs_stat_number_of_times_throttled", "The number of times all tasks in the same cgroup as the Elasticsearch process have been throttled");
+        catalog.registerNodeGaugeUnit("os_cgroup_cpu_cfs_stat_time_throttled", "seconds", "The total amount of time (in seconds) for which all tasks in the same cgroup as the Elasticsearch process have been throttled");
+        catalog.registerNodeGaugeUnit("os_cgroup_memory_limit", "bytes", "The maximum amount of user memory (including file cache) allowed for all tasks in the same cgroup as the Elasticsearch process");
+        catalog.registerNodeGaugeUnit("os_cgroup_memory_usage", "bytes", " The total current memory usage by processes in the cgroup (in bytes) by all tasks in the same cgroup as the Elasticsearch process");
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void updateOsMetrics(OsStats os) {
         if (os != null) {
             if (os.getCpu() != null) {
@@ -954,17 +966,35 @@ public class PrometheusMetricsCollector {
 
             if (os.getMem() != null) {
                 final var mem = os.getMem();
-                catalog.setNodeGauge("os_mem_free_bytes", mem.getFree().getBytes());
+                catalog.setNodeGauge("os_mem_free", mem.getFree().getBytes());
                 catalog.setNodeGauge("os_mem_free_percent", mem.getFreePercent());
-                catalog.setNodeGauge("os_mem_used_bytes", mem.getUsed().getBytes());
+                catalog.setNodeGauge("os_mem_used", mem.getUsed().getBytes());
                 catalog.setNodeGauge("os_mem_used_percent", mem.getUsedPercent());
-                catalog.setNodeGauge("os_mem_total_bytes", mem.getTotal().getBytes());
+                catalog.setNodeGauge("os_mem_total", mem.getTotal().getBytes());
             }
 
             if (os.getSwap() != null) {
-                catalog.setNodeGauge("os_swap_free_bytes", os.getSwap().getFree().getBytes());
-                catalog.setNodeGauge("os_swap_used_bytes", os.getSwap().getUsed().getBytes());
-                catalog.setNodeGauge("os_swap_total_bytes", os.getSwap().getTotal().getBytes());
+                catalog.setNodeGauge("os_swap_free", os.getSwap().getFree().getBytes());
+                catalog.setNodeGauge("os_swap_used", os.getSwap().getUsed().getBytes());
+                catalog.setNodeGauge("os_swap_total", os.getSwap().getTotal().getBytes());
+            }
+
+            if (os.getCgroup() != null) {
+                var cgroup = os.getCgroup();
+
+                catalog.setNodeInfo("os_cgroup_control_group", "cpuacct", cgroup.getCpuAcctControlGroup());
+                catalog.setNodeInfo("os_cgroup_control_group", "cpu", cgroup.getCpuControlGroup());
+                catalog.setNodeInfo("os_cgroup_control_group", "memory", cgroup.getMemoryControlGroup());
+                catalog.setNodeGauge("os_cgroup_cpuacct_usage", cgroup.getCpuAcctUsageNanos() / 1E9);
+                catalog.setNodeGauge("os_cgroup_cpu_cfs_period", cgroup.getCpuCfsPeriodMicros() / 1E6);
+                catalog.setNodeGauge("os_cgroup_cpu_cfs_quota", cgroup.getCpuCfsQuotaMicros() / 1E6);
+                catalog.setNodeGauge("os_cgroup_cpu_cfs_stat_number_of_elapsed_periods", cgroup.getCpuStat().getNumberOfElapsedPeriods());
+                catalog.setNodeGauge("os_cgroup_cpu_cfs_stat_number_of_times_throttled", cgroup.getCpuStat().getNumberOfTimesThrottled());
+                catalog.setNodeGauge("os_cgroup_cpu_cfs_stat_time_throttled", cgroup.getCpuStat().getTimeThrottledNanos() / 1E9);
+                catalog.setNodeGauge("os_cgroup_cpu_cfs_period", cgroup.getCpuCfsPeriodMicros() / 1E6);
+                catalog.setNodeGauge("os_cgroup_cpu_cfs_quota", cgroup.getCpuCfsQuotaMicros() / 1E6);
+                catalog.setNodeGauge("os_cgroup_memory_limit", Double.parseDouble(cgroup.getMemoryLimitInBytes()));
+                catalog.setNodeGauge("os_cgroup_memory_usage", Double.parseDouble(cgroup.getMemoryUsageInBytes()));
             }
         }
     }
