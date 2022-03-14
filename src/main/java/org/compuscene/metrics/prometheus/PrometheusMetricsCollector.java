@@ -44,6 +44,8 @@ import org.elasticsearch.script.ScriptStats;
 import org.elasticsearch.threadpool.ThreadPoolStats;
 import org.elasticsearch.transport.TransportStats;
 
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -176,107 +178,129 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerIndicesMetrics() {
-        catalog.registerNodeGauge("indices_doc_number", "The number of documents across all local node primary shards. This excludes deleted documents and counts any nested documents separately from their parents. It also excludes documents which were indexed recently and do not yet belong to a segment.");
-        catalog.registerNodeGauge("indices_doc_deleted_number", "The number of deleted documents across all local primary shards, which may be higher or lower than the number of delete operations you have performed. This number excludes deletes that were performed recently and do not yet belong to a segment.");
+        catalog.registerNodeGauge("indices_doc_number", "The number of documents across all local node primary shards. This excludes deleted documents and counts any nested documents separately from their parents. It also excludes documents which were indexed recently and do not yet belong to a segment");
+        catalog.registerNodeGauge("indices_doc_deleted_number", "The number of deleted documents across all local primary shards, which may be higher or lower than the number of delete operations you have performed. This number excludes deletes that were performed recently and do not yet belong to a segment");
 
-        catalog.registerNodeGaugeUnit("indices_store_size", "bytes", "Total size, in bytes, of all shards assigned to the node.");
-        catalog.registerNodeGaugeUnit("indices_store_data_set_size", "bytes", "Total data set size, in bytes, of all shards assigned to the node. This includes the size of shards not stored fully on the node, such as the cache for partially mounted indices.");
-        catalog.registerNodeGaugeUnit("indices_store_reserved_size", "bytes", "A prediction, in bytes, of how much larger the shard stores on this node will eventually grow due to ongoing peer recoveries, restoring snapshots, and similar activities. A value of -1 indicates that this is not available.\n.");
+        catalog.registerNodeGauge("indices_shards_stats_total_count", "The total(current) number of shards assigned to the node");
+
+        catalog.registerNodeGaugeUnit("indices_store_size", "bytes", "Total size, in bytes, of all shards assigned to the node");
+        catalog.registerNodeGaugeUnit("indices_store_data_set_size", "bytes", "Total data set size, in bytes, of all shards assigned to the node. This includes the size of shards not stored fully on the node, such as the cache for partially mounted indices");
+        catalog.registerNodeGaugeUnit("indices_store_reserved_size", "bytes", "A prediction, in bytes, of how much larger the shard stores on this node will eventually grow due to ongoing peer recoveries, restoring snapshots, and similar activities. A value of -1 indicates that this is not available");
 
         catalog.registerNodeGauge("indices_indexing_delete_count", "Total number of deletion operations");
         catalog.registerNodeGauge("indices_indexing_delete_current_number", "Number of deletion operations currently running");
         catalog.registerNodeGaugeUnit("indices_indexing_delete_time", "seconds", "Time in seconds spent performing deletion operations.");
         //catalog.registerNodeCounterUnit("indices_indexing_delete_time", "seconds", "Time in seconds spent performing deletion operations.");
-
         catalog.registerNodeGauge("indices_indexing_index_count", "Total number of indexing operations");
         catalog.registerNodeGauge("indices_indexing_index_current_number", "Number of indexing operations currently running");
         catalog.registerNodeGauge("indices_indexing_index_failed_count", "Total number of failed indexing operations");
         catalog.registerNodeGaugeUnit("indices_indexing_index_time", "seconds", "Total time in seconds spent performing indexing operations");
-
         catalog.registerNodeGauge("indices_indexing_noop_update_count", "Total number of noop operations");
         catalog.registerNodeGauge("indices_indexing_is_throttled_bool", "Is indexing throttling ?");
-        catalog.registerNodeGaugeUnit(
-                "indices_indexing_throttle_time", "seconds", "Total time in seconds spent throttling operations");
+        catalog.registerNodeGaugeUnit("indices_indexing_throttle_time", "seconds", "Total time in seconds spent throttling operations");
 
         catalog.registerNodeGauge("indices_get_count", "Total number of 'get' operations");
-        catalog.registerNodeGaugeUnit("indices_get_time", "seconds", "Time in seconds spent performing 'get' operations.");
-        catalog.registerNodeGauge("indices_get_exists_count", "Total number of successful get operations");
-        catalog.registerNodeGaugeUnit(
-                "indices_get_exists_time", "seconds", "Time in seconds spent performing successful get operations..");
-        catalog.registerNodeGauge("indices_get_missing_count", "Total number of failed get operations");
-        catalog.registerNodeGaugeUnit(
-                "indices_get_missing_time", "seconds", "Time in milliseconds spent performing failed get operations.");
-        catalog.registerNodeGauge("indices_get_current_number", "Number of get operations currently running");
+        catalog.registerNodeGaugeUnit("indices_get_time", "seconds", "Time in seconds spent performing 'get' operations");
+        catalog.registerNodeGauge("indices_get_exists_count", "Total number of successful 'get' operations");
+        catalog.registerNodeGaugeUnit("indices_get_exists_time", "seconds", "Time in seconds spent performing successful 'get' operations");
+        catalog.registerNodeGauge("indices_get_missing_count", "Total number of failed 'get' operations");
+        catalog.registerNodeGaugeUnit("indices_get_missing_time", "seconds", "Time in seconds spent performing failed 'get' operations");
+        catalog.registerNodeGauge("indices_get_current_number", "Number of 'get' operations currently running");
 
         catalog.registerNodeGauge("indices_search_open_contexts_number", "Number of search open contexts");
-        catalog.registerNodeGauge("indices_search_fetch_count", "Count of search fetches");
-        catalog.registerNodeGauge("indices_search_fetch_current_number", "Current rate of search fetches");
-        catalog.registerNodeGauge("indices_search_fetch_time_seconds", "Time spent while search fetches");
-        catalog.registerNodeGauge("indices_search_query_count", "Count of search queries");
-        catalog.registerNodeGauge("indices_search_query_current_number", "Current rate of search queries");
-        catalog.registerNodeGauge("indices_search_query_time_seconds", "Time spent while search queries");
-        catalog.registerNodeGauge("indices_search_scroll_count", "Count of search scrolls");
-        catalog.registerNodeGauge("indices_search_scroll_current_number", "Current rate of search scrolls");
-        catalog.registerNodeGauge("indices_search_scroll_time_seconds", "Time spent while search scrolls");
+        catalog.registerNodeGauge("indices_search_query_count", "Total number of query operations");
+        catalog.registerNodeGauge("indices_search_query_current_number", "Number of query operations currently running");
+        catalog.registerNodeGaugeUnit("indices_search_query_time", "seconds", "Time in seconds spent performing query operations");
+        catalog.registerNodeGauge("indices_search_fetch_count", "Total number of fetch operations");
+        catalog.registerNodeGauge("indices_search_fetch_current_number", "Number of fetch operations currently running");
+        catalog.registerNodeGaugeUnit("indices_search_fetch_time", "seconds", "Time in seconds spent performing fetch operations");
+        catalog.registerNodeGauge("indices_search_scroll_count", "Total number of scroll operations");
+        catalog.registerNodeGauge("indices_search_scroll_current_number", "Number of scroll operations currently running");
+        catalog.registerNodeGaugeUnit("indices_search_scroll_time", "seconds", "Time in seconds spent performing scroll operations");
+        catalog.registerNodeGauge("indices_search_suggest_count", "Total number of suggest operations");
+        catalog.registerNodeGauge("indices_search_suggest_current_number", "Number of suggest operations currently running");
+        catalog.registerNodeGaugeUnit("indices_search_suggest_time", "seconds", "Time in seconds spent performing suggest operations");
 
-        catalog.registerNodeGauge("indices_merges_current_number", "Current rate of merges");
-        catalog.registerNodeGauge("indices_merges_current_docs_number", "Current rate of documents merged");
-        catalog.registerNodeGauge("indices_merges_current_size_bytes", "Current rate of bytes merged");
-        catalog.registerNodeGauge("indices_merges_total_number", "Count of merges");
-        catalog.registerNodeGauge("indices_merges_total_time_seconds", "Time spent while merging");
-        catalog.registerNodeGauge("indices_merges_total_docs_count", "Count of documents merged");
-        catalog.registerNodeGauge("indices_merges_total_size_bytes", "Count of bytes of merged documents");
-        catalog.registerNodeGauge("indices_merges_total_stopped_time_seconds", "Time spent while merge process stopped");
-        catalog.registerNodeGauge("indices_merges_total_throttled_time_seconds", "Time spent while merging when throttling");
-        catalog.registerNodeGauge("indices_merges_total_auto_throttle_bytes", "Bytes merged while throttling");
+        catalog.registerNodeGauge("indices_merges_current_number", "Number of merge operations currently running");
+        catalog.registerNodeGauge("indices_merges_current_docs_number", "Number of document merges currently running");
+        catalog.registerNodeGaugeUnit("indices_merges_current_size", "bytes", "Memory, in bytes, used performing current document merges.");
+        catalog.registerNodeGauge("indices_merges_total_number", "Total number of merge operations");
+        catalog.registerNodeGaugeUnit("indices_merges_total_time", "seconds", "Total time in seconds spent performing merge operations");
+        catalog.registerNodeGauge("indices_merges_total_docs_count", "Total number of merged documents");
+        catalog.registerNodeGaugeUnit("indices_merges_total_size", "bytes", "Total size of document merges in bytes");
+        catalog.registerNodeGaugeUnit("indices_merges_total_stopped_time", "seconds", "Total time in seconds spent stopping merge operations");
+        catalog.registerNodeGaugeUnit("indices_merges_total_throttled_time", "seconds", "Total time in seconds spent throttling merge operations.");
+        catalog.registerNodeGaugeUnit("indices_merges_total_auto_throttle", "bytes", "Size, in bytes, of automatically throttled merge operations");
 
-        catalog.registerNodeGauge("indices_refresh_total_count", "Count of refreshes");
-        catalog.registerNodeGauge("indices_refresh_total_time_seconds", "Time spent while refreshes");
+        catalog.registerNodeGauge("indices_refresh_total_count", "Total number of refresh operations");
+        catalog.registerNodeGaugeUnit("indices_refresh_total_time", "seconds", "Total time in seconds spent performing refresh operations");
+        catalog.registerNodeGauge("indices_refresh_external_total_count", "Total number of external refresh operations");
+        catalog.registerNodeGaugeUnit("indices_refresh_external_total_time", "seconds", "Total time in seconds spent performing external refresh operations");
         catalog.registerNodeGauge("indices_refresh_listeners_number", "Number of refresh listeners");
 
-        catalog.registerNodeGauge("indices_flush_total_count", "Count of flushes");
-        catalog.registerNodeGauge("indices_flush_total_time_seconds", "Total time spent while flushes");
+        catalog.registerNodeGauge("indices_flush_total_count", "Total number of flush operations");
+        catalog.registerNodeCounter("indices_flush_periodic", "Total number of periodic flush operations");
+        catalog.registerNodeGaugeUnit("indices_flush_total_time", "seconds", "Total time in seconds spent performing flush operations.");
 
-        catalog.registerNodeGauge("indices_querycache_cache_count", "Count of queries in cache");
-        catalog.registerNodeGauge("indices_querycache_cache_size_bytes", "Query cache size");
-        catalog.registerNodeGauge("indices_querycache_evictions_count", "Count of evictions in query cache");
-        catalog.registerNodeGauge("indices_querycache_hit_count", "Count of hits in query cache");
-        catalog.registerNodeGauge("indices_querycache_memory_size_bytes", "Memory usage of query cache");
-        catalog.registerNodeGauge("indices_querycache_miss_number", "Count of misses in query cache");
-        catalog.registerNodeGauge("indices_querycache_total_number", "Count of usages of query cache");
+        catalog.registerNodeGauge("indices_warmer_current_number", "Number of active index warmers operations");
+        catalog.registerNodeCounter("indices_warmer", "Total number of index warmers operations");
+        catalog.registerNodeCounterUnit("indices_warmer_time", "seconds", "Total time in seconds spent performing index warming operations");
 
-        catalog.registerNodeGauge("indices_fielddata_memory_size_bytes", "Memory usage of field date cache");
-        catalog.registerNodeGauge("indices_fielddata_evictions_count", "Count of evictions in field data cache");
+        catalog.registerNodeGaugeUnit("indices_querycache_memory_size", "bytes", "Total amount of memory, in bytes, used for the query cache across all shards assigned to the node");
+        catalog.registerNodeGauge("indices_querycache_total_number", "Total count of hits, misses, and cached queries in the query cache");
+        catalog.registerNodeGauge("indices_querycache_hit_count", "Number of query cache hits");
+        catalog.registerNodeGauge("indices_querycache_miss_number", "Number of query cache misses");
+        catalog.registerNodeGaugeUnit("indices_querycache_cache_size", "bytes", "Size, in bytes, of the query cache");
+        catalog.registerNodeGauge("indices_querycache_cache_count", "Count of queries in the query cache");
+        catalog.registerNodeGauge("indices_querycache_evictions_count", "Number of query cache evictions");
 
-        catalog.registerNodeGauge("indices_percolate_count", "Count of percolates");
-        catalog.registerNodeGauge("indices_percolate_current_number", "Rate of percolates");
-        catalog.registerNodeGauge("indices_percolate_memory_size_bytes", "Percolate memory size");
-        catalog.registerNodeGauge("indices_percolate_queries_count", "Count of queries percolated");
-        catalog.registerNodeGauge("indices_percolate_time_seconds", "Time spent while percolating");
+        catalog.registerNodeGaugeUnit("indices_fielddata_memory_size", "bytes", "Total amount of memory, in bytes, used for the field data cache across all shards assigned to the node");
+        catalog.registerNodeGauge("indices_fielddata_evictions_count", "Total number of fielddata evictions");
 
-        catalog.registerNodeGauge("indices_completion_size_bytes", "Size of completion suggest statistics");
+        catalog.registerNodeGaugeUnit("indices_completion_size", "bytes", "Total amount of memory, in bytes, used for completion across all shards assigned to the node");
 
         catalog.registerNodeGauge("indices_segments_number", "Current number of segments");
-        catalog.registerNodeGauge("indices_segments_memory_bytes", "Memory used by segments", "type");
+        catalog.registerNodeGaugeUnit(
+                "indices_segments_memory",
+                "bytes",
+                "Total amount of memory, in bytes, used for segments across all shards assigned to the node",
+                "type"
+        );
 
-        catalog.registerNodeGauge("indices_suggest_current_number", "Current rate of suggests");
-        catalog.registerNodeGauge("indices_suggest_count", "Count of suggests");
-        catalog.registerNodeGauge("indices_suggest_time_seconds", "Time spent while making suggests");
+        catalog.registerNodeGauge("indices_segments_max_unsafe_auto_id_timestamp", "Time of the most recently retried indexing request. Recorded in seconds since the Unix Epoch.");
 
-        catalog.registerNodeGauge("indices_requestcache_memory_size_bytes", "Memory used for request cache");
-        catalog.registerNodeGauge("indices_requestcache_hit_count", "Number of hits in request cache");
-        catalog.registerNodeGauge("indices_requestcache_miss_count", "Number of misses in request cache");
+        catalog.registerNodeGauge("indices_translog_operations_number", "Number of transaction log operations");
+        catalog.registerNodeGaugeUnit("indices_translog_size", "bytes", "Size, in bytes, of the transaction log");
+        catalog.registerNodeGauge("indices_translog_uncommitted_operations_number", "Number of uncommitted transaction log operations");
+        catalog.registerNodeGaugeUnit("indices_translog_uncommitted_size", "bytes", "Size, in bytes, of uncommitted transaction log operations");
+        catalog.registerNodeGauge("indices_translog_earliest_last_modified_age", "Earliest last modified age in seconds for the transaction log");
+
+        catalog.registerNodeGauge("indices_requestcache_memory_size_bytes", "Memory, in bytes, used by the request cache.");
+        catalog.registerNodeGauge("indices_requestcache_hit_count", "Number of request cache hits.");
+        catalog.registerNodeGauge("indices_requestcache_miss_count", "Number of request cache misses");
         catalog.registerNodeGauge("indices_requestcache_evictions_count", "Number of evictions in request cache");
 
         catalog.registerNodeGauge("indices_recovery_current_number", "Current number of recoveries", "type");
-        catalog.registerNodeGauge("indices_recovery_throttle_time_seconds", "Time spent while throttling recoveries");
+        catalog.registerNodeGaugeUnit("indices_recovery_throttle_time", "seconds", "Time spent while throttling recoveries");
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void updateIndicesMetrics(NodeIndicesStats idx) {
         if (idx != null) {
             catalog.setNodeGauge("indices_doc_number", idx.getDocs().getCount());
             catalog.setNodeGauge("indices_doc_deleted_number", idx.getDocs().getDeleted());
+
+            try {
+                var obj = idx.getClass();
+                Field field = obj.getDeclaredField("stats");
+                field.setAccessible(true);
+                CommonStats stats = (CommonStats) field.get(idx);
+                catalog.setNodeGauge("indices_shards_stats_total_count", stats.getShards().getTotalCount());
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                logger.info("failed to access stats", e);
+            }
 
             catalog.setNodeGauge("indices_store_size", idx.getStore().sizeInBytes());
             catalog.setNodeGauge("indices_store_data_set_size", idx.getStore().totalDataSetSizeInBytes());
@@ -284,91 +308,93 @@ public class PrometheusMetricsCollector {
 
             catalog.setNodeGauge("indices_indexing_delete_count", idx.getIndexing().getTotal().getDeleteCount());
             catalog.setNodeGauge("indices_indexing_delete_current_number", idx.getIndexing().getTotal().getDeleteCurrent());
-            catalog.setNodeGauge("indices_indexing_delete_time",
-                    idx.getIndexing().getTotal().getDeleteTime().millis() / 1000.0);
+            catalog.setNodeGauge("indices_indexing_delete_time", idx.getIndexing().getTotal().getDeleteTime().millis() / 1E3);
             catalog.setNodeGauge("indices_indexing_index_count", idx.getIndexing().getTotal().getIndexCount());
             catalog.setNodeGauge("indices_indexing_index_current_number", idx.getIndexing().getTotal().getIndexCurrent());
             catalog.setNodeGauge("indices_indexing_index_failed_count", idx.getIndexing().getTotal().getIndexFailedCount());
-            catalog.setNodeGauge("indices_indexing_index_time",
-                    idx.getIndexing().getTotal().getIndexTime().millis() / 1000.0);
+            catalog.setNodeGauge("indices_indexing_index_time", idx.getIndexing().getTotal().getIndexTime().millis() / 1E3);
             catalog.setNodeGauge("indices_indexing_noop_update_count", idx.getIndexing().getTotal().getNoopUpdateCount());
             catalog.setNodeGauge("indices_indexing_is_throttled_bool", idx.getIndexing().getTotal().isThrottled() ? 1 : 0);
-            catalog.setNodeGauge("indices_indexing_throttle_time",
-                    idx.getIndexing().getTotal().getThrottleTime().millis() / 1000.0);
+            catalog.setNodeGauge("indices_indexing_throttle_time", idx.getIndexing().getTotal().getThrottleTime().millis() / 1E3);
 
             catalog.setNodeGauge("indices_get_count", idx.getGet().getCount());
-            catalog.setNodeGauge("indices_get_time", idx.getGet().getTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("indices_get_time", idx.getGet().getTimeInMillis() / 1E3);
             catalog.setNodeGauge("indices_get_exists_count", idx.getGet().getExistsCount());
-            catalog.setNodeGauge("indices_get_exists_time", idx.getGet().getExistsTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("indices_get_exists_time", idx.getGet().getExistsTimeInMillis() / 1E3);
             catalog.setNodeGauge("indices_get_missing_count", idx.getGet().getMissingCount());
-            catalog.setNodeGauge("indices_get_missing_time", idx.getGet().getMissingTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("indices_get_missing_time", idx.getGet().getMissingTimeInMillis() / 1E3);
             catalog.setNodeGauge("indices_get_current_number", idx.getGet().current());
 
             catalog.setNodeGauge("indices_search_open_contexts_number", idx.getSearch().getOpenContexts());
-            catalog.setNodeGauge("indices_search_fetch_count", idx.getSearch().getTotal().getFetchCount());
-            catalog.setNodeGauge("indices_search_fetch_current_number", idx.getSearch().getTotal().getFetchCurrent());
-            catalog.setNodeGauge("indices_search_fetch_time_seconds",
-                    idx.getSearch().getTotal().getFetchTimeInMillis() / 1000.0);
             catalog.setNodeGauge("indices_search_query_count", idx.getSearch().getTotal().getQueryCount());
             catalog.setNodeGauge("indices_search_query_current_number", idx.getSearch().getTotal().getQueryCurrent());
-            catalog.setNodeGauge("indices_search_query_time_seconds",
-                    idx.getSearch().getTotal().getQueryTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("indices_search_query_time", idx.getSearch().getTotal().getQueryTimeInMillis() / 1E3);
+            catalog.setNodeGauge("indices_search_fetch_count", idx.getSearch().getTotal().getFetchCount());
+            catalog.setNodeGauge("indices_search_fetch_current_number", idx.getSearch().getTotal().getFetchCurrent());
+            catalog.setNodeGauge("indices_search_fetch_time", idx.getSearch().getTotal().getFetchTimeInMillis() / 1E3);
             catalog.setNodeGauge("indices_search_scroll_count", idx.getSearch().getTotal().getScrollCount());
             catalog.setNodeGauge("indices_search_scroll_current_number", idx.getSearch().getTotal().getScrollCurrent());
-            catalog.setNodeGauge("indices_search_scroll_time_seconds",
-                    idx.getSearch().getTotal().getScrollTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("indices_search_scroll_time", idx.getSearch().getTotal().getScrollTimeInMillis() / 1E3);
+            catalog.setNodeGauge("indices_search_suggest_count", idx.getSearch().getTotal().getSuggestCount());
+            catalog.setNodeGauge("indices_search_suggest_current_number", idx.getSearch().getTotal().getSuggestCurrent());
+            catalog.setNodeGauge("indices_search_suggest_time", idx.getSearch().getTotal().getSuggestTimeInMillis() / 1E3);
 
             catalog.setNodeGauge("indices_merges_current_number", idx.getMerge().getCurrent());
             catalog.setNodeGauge("indices_merges_current_docs_number", idx.getMerge().getCurrentNumDocs());
-            catalog.setNodeGauge("indices_merges_current_size_bytes", idx.getMerge().getCurrentSizeInBytes());
+            catalog.setNodeGauge("indices_merges_current_size", idx.getMerge().getCurrentSizeInBytes());
             catalog.setNodeGauge("indices_merges_total_number", idx.getMerge().getTotal());
-            catalog.setNodeGauge("indices_merges_total_time_seconds", idx.getMerge().getTotalTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("indices_merges_total_time", idx.getMerge().getTotalTimeInMillis() / 1E3);
             catalog.setNodeGauge("indices_merges_total_docs_count", idx.getMerge().getTotalNumDocs());
-            catalog.setNodeGauge("indices_merges_total_size_bytes", idx.getMerge().getTotalSizeInBytes());
-            catalog.setNodeGauge("indices_merges_total_stopped_time_seconds",
-                    idx.getMerge().getTotalStoppedTimeInMillis() / 1000.0);
-            catalog.setNodeGauge("indices_merges_total_throttled_time_seconds",
-                    idx.getMerge().getTotalThrottledTimeInMillis() / 1000.0);
-            catalog.setNodeGauge("indices_merges_total_auto_throttle_bytes", idx.getMerge().getTotalBytesPerSecAutoThrottle());
+            catalog.setNodeGauge("indices_merges_total_size", idx.getMerge().getTotalSizeInBytes());
+            catalog.setNodeGauge("indices_merges_total_stopped_time", idx.getMerge().getTotalStoppedTimeInMillis() / 1E3);
+            catalog.setNodeGauge("indices_merges_total_throttled_time", idx.getMerge().getTotalThrottledTimeInMillis() / 1E3);
+            catalog.setNodeGauge("indices_merges_total_auto_throttle", idx.getMerge().getTotalBytesPerSecAutoThrottle());
 
             catalog.setNodeGauge("indices_refresh_total_count", idx.getRefresh().getTotal());
-            catalog.setNodeGauge("indices_refresh_total_time_seconds", idx.getRefresh().getTotalTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("indices_refresh_total_time", idx.getRefresh().getTotalTimeInMillis() / 1E3);
+            catalog.setNodeGauge("indices_refresh_external_total_count", idx.getRefresh().getExternalTotal());
+            catalog.setNodeGauge("indices_refresh_external_total_time", idx.getRefresh().getExternalTotalTimeInMillis() / 1E3);
             catalog.setNodeGauge("indices_refresh_listeners_number", idx.getRefresh().getListeners());
 
             catalog.setNodeGauge("indices_flush_total_count", idx.getFlush().getTotal());
-            catalog.setNodeGauge("indices_flush_total_time_seconds", idx.getFlush().getTotalTimeInMillis() / 1000.0);
+            catalog.setNodeCounter("indices_flush_periodic", idx.getFlush().getPeriodic());
+            catalog.setNodeGauge("indices_flush_total_time", idx.getFlush().getTotalTimeInMillis() / 1E3);
 
-            catalog.setNodeGauge("indices_querycache_cache_count", idx.getQueryCache().getCacheCount());
-            catalog.setNodeGauge("indices_querycache_cache_size_bytes", idx.getQueryCache().getCacheSize());
-            catalog.setNodeGauge("indices_querycache_evictions_count", idx.getQueryCache().getEvictions());
-            catalog.setNodeGauge("indices_querycache_hit_count", idx.getQueryCache().getHitCount());
-            catalog.setNodeGauge("indices_querycache_memory_size_bytes", idx.getQueryCache().getMemorySizeInBytes());
-            catalog.setNodeGauge("indices_querycache_miss_number", idx.getQueryCache().getMissCount());
+            catalog.setNodeGauge("indices_warmer_current_number", idx.getWarmer().current());
+            catalog.setNodeCounter("indices_warmer", idx.getWarmer().total());
+            catalog.setNodeCounter("indices_warmer_time", idx.getWarmer().totalTimeInMillis() / 1E3);
+
+            catalog.setNodeGauge("indices_querycache_memory_size", idx.getQueryCache().getMemorySizeInBytes());
             catalog.setNodeGauge("indices_querycache_total_number", idx.getQueryCache().getTotalCount());
+            catalog.setNodeGauge("indices_querycache_hit_count", idx.getQueryCache().getHitCount());
+            catalog.setNodeGauge("indices_querycache_miss_number", idx.getQueryCache().getMissCount());
+            catalog.setNodeGauge("indices_querycache_cache_size", idx.getQueryCache().getCacheSize());
+            catalog.setNodeGauge("indices_querycache_cache_count", idx.getQueryCache().getCacheCount());
+            catalog.setNodeGauge("indices_querycache_evictions_count", idx.getQueryCache().getEvictions());
 
-            catalog.setNodeGauge("indices_fielddata_memory_size_bytes", idx.getFieldData().getMemorySizeInBytes());
+            catalog.setNodeGauge("indices_fielddata_memory_size", idx.getFieldData().getMemorySizeInBytes());
             catalog.setNodeGauge("indices_fielddata_evictions_count", idx.getFieldData().getEvictions());
 
-            catalog.setNodeGauge("indices_completion_size_bytes", idx.getCompletion().getSizeInBytes());
+            catalog.setNodeGauge("indices_completion_size", idx.getCompletion().getSizeInBytes());
 
             catalog.setNodeGauge("indices_segments_number", idx.getSegments().getCount());
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getMemoryInBytes(), "all");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getBitsetMemoryInBytes(), "bitset");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getDocValuesMemoryInBytes(), "docvalues");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getIndexWriterMemoryInBytes(),
-                    "indexwriter");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getNormsMemoryInBytes(), "norms");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getStoredFieldsMemoryInBytes(),
-                    "storefields");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getTermsMemoryInBytes(), "terms");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getTermVectorsMemoryInBytes(),
-                    "termvectors");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getVersionMapMemoryInBytes(), "versionmap");
-            catalog.setNodeGauge("indices_segments_memory_bytes", idx.getSegments().getPointsMemoryInBytes(), "points");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getMemoryInBytes(), "all");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getBitsetMemoryInBytes(), "bitset");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getDocValuesMemoryInBytes(), "docvalues");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getIndexWriterMemoryInBytes(), "indexwriter");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getNormsMemoryInBytes(), "norms");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getStoredFieldsMemoryInBytes(), "storefields");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getTermsMemoryInBytes(), "terms");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getTermVectorsMemoryInBytes(), "termvectors");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getVersionMapMemoryInBytes(), "versionmap");
+            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getPointsMemoryInBytes(), "points");
+            catalog.setNodeGauge("indices_segments_max_unsafe_auto_id_timestamp", idx.getSegments().getMaxUnsafeAutoIdTimestamp() / 1000.0);
 
-            catalog.setNodeGauge("indices_suggest_current_number", idx.getSearch().getTotal().getSuggestCurrent());
-            catalog.setNodeGauge("indices_suggest_count", idx.getSearch().getTotal().getSuggestCount());
-            catalog.setNodeGauge("indices_suggest_time_seconds", idx.getSearch().getTotal().getSuggestTimeInMillis() / 1000.0);
+            catalog.setNodeGauge("indices_translog_operations_number", idx.getTranslog().estimatedNumberOfOperations());
+            catalog.setNodeGauge("indices_translog_size", idx.getTranslog().getTranslogSizeInBytes());
+            catalog.setNodeGauge("indices_translog_uncommitted_operations_number", idx.getTranslog().getUncommittedOperations());
+            catalog.setNodeGauge("indices_translog_uncommitted_size", idx.getTranslog().getUncommittedSizeInBytes());
+            catalog.setNodeGauge("indices_translog_earliest_last_modified_age", idx.getTranslog().getEarliestLastModifiedAge() / 1000.0);
 
             catalog.setNodeGauge("indices_requestcache_memory_size_bytes", idx.getRequestCache().getMemorySizeInBytes());
             catalog.setNodeGauge("indices_requestcache_hit_count", idx.getRequestCache().getHitCount());
@@ -377,8 +403,7 @@ public class PrometheusMetricsCollector {
 
             catalog.setNodeGauge("indices_recovery_current_number", idx.getRecoveryStats().currentAsSource(), "source");
             catalog.setNodeGauge("indices_recovery_current_number", idx.getRecoveryStats().currentAsTarget(), "target");
-            catalog.setNodeGauge("indices_recovery_throttle_time_seconds",
-                    idx.getRecoveryStats().throttleTime().millis() / 1000.0);
+            catalog.setNodeGauge("indices_recovery_throttle_time", idx.getRecoveryStats().throttleTime().millis() / 1E3);
         }
     }
 

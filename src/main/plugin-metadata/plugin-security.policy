@@ -18,6 +18,10 @@
 grant {
     permission java.lang.RuntimePermission "accessClassInPackage.com.sun.management";
     permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+    permission java.lang.RuntimePermission "accessClassInPackage.org.elasticsearch.index.stats";
+    permission java.lang.RuntimePermission "accessClassInPackage.org.elasticsearch.indices";
+    permission java.lang.RuntimePermission "accessClassInPackage.org.elasticsearch.monitor.fs";
+    permission java.lang.RuntimePermission "accessClassInPackage.org.elasticsearch.transport";
     permission java.lang.RuntimePermission "accessDeclaredMembers";
     permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
     permission java.io.FilePermission "/proc/self/status", "read";
