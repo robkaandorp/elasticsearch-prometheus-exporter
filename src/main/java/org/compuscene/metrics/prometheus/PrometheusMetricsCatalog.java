@@ -25,9 +25,6 @@ import org.elasticsearch.rest.prometheus.RestPrometheusMetricsAction;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -232,14 +229,7 @@ public class PrometheusMetricsCatalog {
     public String toTextFormat(String contentType) throws IOException {
         Writer writer = new StringWriter();
         SpecialPermission.check();
-        try {
-            AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
-                TextFormat.writeFormat(contentType, writer, registry.metricFamilySamples());
-                return null;
-            });
-        } catch (PrivilegedActionException e) {
-            throw (IOException) e.getCause();
-        }
+        TextFormat.writeFormat(contentType, writer, registry.metricFamilySamples());
         return writer.toString();
     }
 }
