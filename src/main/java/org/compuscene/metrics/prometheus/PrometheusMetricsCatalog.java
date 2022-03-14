@@ -104,6 +104,41 @@ public class PrometheusMetricsCatalog {
         return extended;
     }
 
+    public void registerCounter(String metric, String help, String... labels) {
+        Counter counter = Counter.build().
+                withoutExemplars().
+                name(metric).
+                help(help).
+                labelNames(labels).
+                register(registry);
+
+        metrics.put(metric, counter);
+
+        logger.debug(String.format(Locale.ENGLISH, "Registered new counter %s", metric));
+    }
+
+    public void setCounter(String metric, double value, String... labelValues) {
+        Counter counter = (Counter) metrics.get(metric);
+        counter.labels(labelValues).inc(value);
+    }
+
+    public void registerGauge(String metric, String help, String... labels) {
+        Gauge gauge = Gauge.build().
+                name(metric).
+                help(help).
+                labelNames(labels).
+                register(registry);
+
+        metrics.put(metric, gauge);
+
+        logger.debug(String.format(Locale.ENGLISH, "Registered new gauge %s", metric));
+    }
+
+    public void setGauge(String metric, double value, String... labelValues) {
+        Gauge gauge = (Gauge) metrics.get(metric);
+        gauge.labels(labelValues).set(value);
+    }
+
     public void registerClusterEnum(String metric, String help, Class e, String... labels) {
         Enumeration enumeration = Enumeration.build().
                 name(metricPrefix + metric).
@@ -185,6 +220,7 @@ public class PrometheusMetricsCatalog {
 
     public void registerNodeCounterUnit(String metric, String unit, String help, String... labels) {
         Counter counter = Counter.build().
+                withoutExemplars().
                 name(metricPrefix + metric).
                 unit(unit).
                 help(help).

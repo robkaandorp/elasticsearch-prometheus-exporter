@@ -806,22 +806,41 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerProcessMetrics() {
-        catalog.registerNodeGauge("process_cpu_percent", "CPU percentage used by ES process");
-        catalog.registerNodeGauge("process_cpu_time_seconds", "CPU time used by ES process");
+        // the Prometheus java client is unable to fetch these.
+        catalog.registerCounter("process_cpu_seconds", "Total user and system CPU time spent in seconds.");
+        catalog.registerGauge("process_open_fds", "Number of open file descriptors.");
+        catalog.registerGauge("process_max_fds", "Maximum number of open file descriptors.");
 
-        catalog.registerNodeGauge("process_mem_total_virtual_bytes", "Memory used by ES process");
+        catalog.registerNodeGauge("process_cpu_percent", "CPU usage in percent, or -1 if not known at the time the stats are computed.");
+        catalog.registerNodeGaugeUnit("process_cpu_time", "seconds", "CPU time (in seconds) used by the process on which the Java virtual machine is running, or -1 if not supported.");
 
-        catalog.registerNodeGauge("process_file_descriptors_open_number", "Open file descriptors");
-        catalog.registerNodeGauge("process_file_descriptors_max_number", "Max file descriptors");
+        catalog.registerNodeGaugeUnit("process_mem_total_virtual", "bytes", "Size in bytes of virtual memory that is guaranteed to be available to the running process");
+
+        catalog.registerNodeGauge("process_file_descriptors_open_number", "Number of opened file descriptors associated with the current or -1 if not supported");
+        catalog.registerNodeGauge("process_file_descriptors_max_number", "Maximum number of file descriptors allowed on the system, or -1 if not supported");
     }
 
     private void updateProcessMetrics(ProcessStats ps) {
         if (ps != null) {
-            catalog.setNodeGauge("process_cpu_percent", ps.getCpu().getPercent());
-            catalog.setNodeGauge("process_cpu_time_seconds", ps.getCpu().getTotal().millis() / 1000.0);
+            try {
+                // The ES metrics is in millis, the java prometheus one is in nanos, so we do our own thing
+                // catalog.setCounter("process_cpu_seconds", ps.getCpu().getTotal().millis() / 1E3);
+                var osBean = ManagementFactory.getOperatingSystemMXBean();
+                Method method =  Class.forName("com.sun.management.OperatingSystemMXBean").getMethod("getProcessCpuTime");
+                Long processCpuTime = (Long) method.invoke(osBean);
+                catalog.setCounter("process_cpu_seconds", processCpuTime / 1E9);
+            } catch (Exception e) {
+                logger.debug("Could not access process cpu time", e);
+            }
+            catalog.setGauge("process_open_fds", ps.getOpenFileDescriptors());
+            catalog.setGauge("process_max_fds", ps.getMaxFileDescriptors());
 
-            catalog.setNodeGauge("process_mem_total_virtual_bytes", ps.getMem().getTotalVirtual().getBytes());
+            catalog.setNodeGauge("process_cpu_percent", ps.getCpu().getPercent());
+            catalog.setNodeGauge("process_cpu_time", ps.getCpu().getTotal().millis() / 1E3);
+
+            catalog.setNodeGauge("process_mem_total_virtual", ps.getMem().getTotalVirtual().getBytes());
 
             catalog.setNodeGauge("process_file_descriptors_open_number", ps.getOpenFileDescriptors());
             catalog.setNodeGauge("process_file_descriptors_max_number", ps.getMaxFileDescriptors());
