@@ -83,9 +83,9 @@ public class PrometheusMetricsCollector {
         registerESSettings();
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerClusterMetrics() {
-        catalog.registerClusterGauge(
-                "cluster_status", "Health status of the cluster, based on the state of its primary and replica shards");
+        catalog.registerClusterGauge("cluster_status", "Health status of the cluster, based on the state of its primary and replica shards");
         catalog.registerClusterEnum(
                 "cluster_health_status",
                 "Health status of the cluster, based on the state of its primary and replica shards as enumeration",
@@ -95,22 +95,14 @@ public class PrometheusMetricsCollector {
         catalog.registerClusterGauge("cluster_nodes_number", "The number of nodes within the cluster");
         catalog.registerClusterGauge("cluster_datanodes_number", "The number of nodes that are dedicated data nodes");
 
-        catalog.registerClusterGauge(
-                "cluster_shards_active_percent", "The ratio of active shards in the cluster expressed as a percentage");
-        catalog.registerClusterGaugeUnit(
-                "cluster_shards_active", "ratio", "The ratio of active shards in the cluster");
+        catalog.registerClusterGauge("cluster_shards_active_percent", "The ratio of active shards in the cluster expressed as a percentage");
+        catalog.registerClusterGaugeUnit("cluster_shards_active", "ratio", "The ratio of active shards in the cluster");
         catalog.registerClusterGauge("cluster_shards_number", "The number of shards by type", "type");
 
         catalog.registerClusterGauge("cluster_pending_tasks_number", "Number of pending tasks");
-        catalog.registerClusterGaugeUnit(
-                "cluster_task_max_waiting_time",
-                "seconds",
-                "The time expressed in seconds since the earliest initiated task is waiting for being performed");
+        catalog.registerClusterGaugeUnit("cluster_task_max_waiting_time", "seconds", "The time expressed in seconds since the earliest initiated task is waiting for being performed");
 
-        catalog.registerClusterGauge(
-                "cluster_is_timedout_bool",
-                "If false the response returned within the period of time that is specified by the timeout parameter (30s by default)");
-
+        catalog.registerClusterGauge("cluster_is_timedout_bool", "If false the response returned within the period of time that is specified by the timeout parameter (30s by default)");
         catalog.registerClusterGauge("cluster_inflight_fetch_number", "The number of unfinished fetches");
     }
 
