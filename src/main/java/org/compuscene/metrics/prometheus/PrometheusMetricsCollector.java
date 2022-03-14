@@ -634,25 +634,45 @@ public class PrometheusMetricsCollector {
         catalog.setClusterGauge("index_warmer_count", idx.getWarmer().total(), indexName, context);
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerTransportMetrics() {
-        catalog.registerNodeGauge("transport_server_open_number", "Opened server connections");
+        catalog.registerNodeGauge("transport_server_open_number", "Current number of inbound TCP connections used for internal communication between nodes");
+        catalog.registerNodeCounter("transport_outbound_connections", "The cumulative number of outbound transport connections that this node has opened since it started.");
 
-        catalog.registerNodeGauge("transport_rx_packets_count", "Received packets");
-        catalog.registerNodeGauge("transport_tx_packets_count", "Sent packets");
+        catalog.registerNodeGauge("transport_rx_packets_count", "DEPRECATED: Total number of RX (receive) packets received by the node during internal cluster communication");
+        catalog.registerNodeGauge("transport_tx_packets_count", "DEPRECATED: Total number of TX (transmit) packets sent by the node during internal cluster communication");
+        catalog.registerNodeCounter("transport_rx_packets", "Total number of RX (receive) packets received by the node during internal cluster communication");
+        catalog.registerNodeCounter("transport_tx_packets", "Total number of TX (transmit) packets sent by the node during internal cluster communication");
 
-        catalog.registerNodeGauge("transport_rx_bytes_count", "Bytes received");
-        catalog.registerNodeGauge("transport_tx_bytes_count", "Bytes sent");
+        catalog.registerNodeGauge("transport_rx_bytes_count", "DEPRECATED: Size, in bytes, of RX packets received by the node during internal cluster communication");
+        catalog.registerNodeGauge("transport_tx_bytes_count", "DEPRECATED: Size, in bytes, of TX packets sent by the node during internal cluster communication");
+        catalog.registerNodeCounterUnit("transport_rx", "bytes", "Size, in bytes, of RX packets received by the node during internal cluster communication");
+        catalog.registerNodeCounterUnit("transport_tx", "bytes", "Size, in bytes, of TX packets sent by the node during internal cluster communication");
     }
 
     private void updateTransportMetrics(TransportStats ts) {
         if (ts != null) {
             catalog.setNodeGauge("transport_server_open_number", ts.getServerOpen());
+            try {
+                // elastic doesn't provide an accessor for the device name.
+                var obj = ts.getClass();
+                Field field = obj.getDeclaredField("totalOutboundConnections");
+                field.setAccessible(true);
+                long totalOutboundConnections = (long) field.get(ts);
+                catalog.setNodeCounter("transport_outbound_connections", totalOutboundConnections);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                logger.info("failed to access totalOutboundConnections", e);
+            }
 
             catalog.setNodeGauge("transport_rx_packets_count", ts.getRxCount());
             catalog.setNodeGauge("transport_tx_packets_count", ts.getTxCount());
+            catalog.setNodeCounter("transport_rx_packets", ts.getRxCount());
+            catalog.setNodeCounter("transport_tx_packets", ts.getTxCount());
 
             catalog.setNodeGauge("transport_rx_bytes_count", ts.getRxSize().getBytes());
             catalog.setNodeGauge("transport_tx_bytes_count", ts.getTxSize().getBytes());
+            catalog.setNodeCounter("transport_rx", ts.getRxSize().getBytes());
+            catalog.setNodeCounter("transport_tx", ts.getTxSize().getBytes());
         }
     }
 
