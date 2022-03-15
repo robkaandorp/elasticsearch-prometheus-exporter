@@ -30,6 +30,8 @@ import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.health.ClusterIndexHealth;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
+import org.elasticsearch.common.util.set.Sets;
+import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.http.HttpStats;
 import org.elasticsearch.index.stats.IndexingPressureStats;
 import org.elasticsearch.indices.NodeIndicesStats;
@@ -40,6 +42,8 @@ import org.elasticsearch.monitor.fs.FsInfo;
 import org.elasticsearch.monitor.jvm.JvmStats;
 import org.elasticsearch.monitor.os.OsStats;
 import org.elasticsearch.monitor.process.ProcessStats;
+import org.elasticsearch.node.AdaptiveSelectionStats;
+import org.elasticsearch.node.ResponseCollectorService;
 import org.elasticsearch.rest.prometheus.RestPrometheusMetricsAction;
 import org.elasticsearch.script.ScriptStats;
 import org.elasticsearch.threadpool.ThreadPoolStats;
@@ -47,9 +51,8 @@ import org.elasticsearch.transport.TransportStats;
 
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import io.prometheus.client.Summary;
 
@@ -90,6 +93,7 @@ public class PrometheusMetricsCollector {
         registerFsMetrics();
         registerESSettings();
         registerIndexingPressure();
+        registerAdaptiveSelection();
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -1123,7 +1127,7 @@ public class PrometheusMetricsCollector {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    public void updateIndexingPressure(IndexingPressureStats ips) {
+    private void updateIndexingPressure(IndexingPressureStats ips) {
         if (ips != null) {
             catalog.setNodeGauge("indexing_pressure_memory_current_combined_coordinating_and_primary", ips.getCurrentCombinedCoordinatingAndPrimaryBytes());
             catalog.setNodeGauge("indexing_pressure_memory_current_coordinating", ips.getCurrentCoordinatingBytes());
@@ -1152,6 +1156,36 @@ public class PrometheusMetricsCollector {
             }
         }
     }
+
+    @SuppressWarnings("checkstyle:LineLength")
+    private void registerAdaptiveSelection() {
+        catalog.registerNodeGauge("adaptive_selection_outgoing_searches", "The number of outstanding search requests from the node these stats are for to the keyed node", "keyed_nodeid");
+        catalog.registerNodeGauge("adaptive_selection_avg_queue_size", "The exponentially weighted moving average queue size of search requests on the keyed node", "keyed_nodeid");
+        catalog.registerNodeGaugeUnit("adaptive_selection_avg_service_time", "seconds", "The exponentially weighted moving average service time, in seconds, of search requests on the keyed node", "keyed_nodeid");
+        catalog.registerNodeGaugeUnit("adaptive_selection_avg_response_time", "seconds", "The exponentially weighted moving average response time, in seconds, of search requests on the keyed node", "keyed_nodeid");
+        catalog.registerNodeGauge("adaptive_selection_rank", "The rank of this node; used for shard selection when routing search requests", "keyed_nodeid");
+    }
+
+    @SuppressWarnings("checkstyle:LineLength")
+    private void updateAdaptiveSelection(AdaptiveSelectionStats as) {
+        if (as != null) {
+            var nodeComputedStats = as.getComputedStats();
+            var clientOutgoingConnections = as.getOutgoingConnections();
+            Set<String> allNodeIds = Sets.union(clientOutgoingConnections.keySet(), nodeComputedStats.keySet());
+            for (String nodeId : allNodeIds) {
+                ResponseCollectorService.ComputedNodeStats stats = nodeComputedStats.get(nodeId);
+                if (stats != null) {
+                    long outgoingSearches = clientOutgoingConnections.getOrDefault(nodeId, 0L);
+                    catalog.setNodeGauge("adaptive_selection_outgoing_searches", outgoingSearches, nodeId);
+                    catalog.setNodeGauge("adaptive_selection_avg_queue_size", stats.queueSize, nodeId);
+                    catalog.setNodeGauge("adaptive_selection_avg_service_time", stats.serviceTime / 1E9, nodeId);
+                    catalog.setNodeGauge("adaptive_selection_avg_response_time", stats.responseTime / 1E9, nodeId);
+                    catalog.setNodeGauge("adaptive_selection_rank", stats.rank(outgoingSearches), nodeId);
+                }
+            }
+        }
+    }
+
     public void updateMetrics(ClusterHealthResponse clusterHealthResponse, NodeStats nodeStats,
                               IndicesStatsResponse indicesStats, ClusterStatsData clusterStatsData) {
         Summary.Timer timer = catalog.startSummaryTimer("metrics_generate_time_seconds");
@@ -1173,6 +1207,7 @@ public class PrometheusMetricsCollector {
         updateOsMetrics(nodeStats.getOs());
         updateFsMetrics(nodeStats.getFs());
         updateIndexingPressure(nodeStats.getIndexingPressureStats());
+        updateAdaptiveSelection(nodeStats.getAdaptiveSelectionStats());
         if (isPrometheusClusterSettings) {
             updateESSettings(clusterStatsData);
         }
