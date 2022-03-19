@@ -856,53 +856,53 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
     private void registerJVMMetrics() {
-        catalog.registerNodeGauge("jvm_uptime_seconds", "JVM uptime");
-        catalog.registerNodeGauge("jvm_mem_heap_max_bytes", "Maximum used memory in heap");
-        catalog.registerNodeGauge("jvm_mem_heap_used_bytes", "Memory used in heap");
-        catalog.registerNodeGauge("jvm_mem_heap_used_percent", "Percentage of memory used in heap");
-        catalog.registerNodeGauge("jvm_mem_nonheap_used_bytes", "Memory used apart from heap");
-        catalog.registerNodeGauge("jvm_mem_heap_committed_bytes", "Committed bytes in heap");
-        catalog.registerNodeGauge("jvm_mem_nonheap_committed_bytes", "Committed bytes apart from heap");
+        catalog.registerNodeGaugeUnit("jvm_uptime", "seconds", "JVM uptime in seconds");
+        catalog.registerNodeGaugeUnit("jvm_mem_heap_max", "bytes", "Maximum amount of memory, in bytes, available for use by the heap");
+        catalog.registerNodeGaugeUnit("jvm_mem_heap_used", "bytes", "Memory, in bytes, currently in use by the heap");
+        catalog.registerNodeGauge("jvm_mem_heap_used_percent", "Percentage of memory currently in use by the heap.");
+        catalog.registerNodeGaugeUnit("jvm_mem_nonheap_used", "bytes", "Non-heap memory used, in bytes");
+        catalog.registerNodeGaugeUnit("jvm_mem_heap_committed", "bytes", "Amount of memory, in bytes, available for use by the heap.");
+        catalog.registerNodeGaugeUnit("jvm_mem_nonheap_committed", "bytes", "Amount of non-heap memory available, in bytes");
 
-        catalog.registerNodeGauge("jvm_mem_pool_max_bytes", "Maximum usage of memory pool", "pool");
-        catalog.registerNodeGauge("jvm_mem_pool_peak_max_bytes", "Maximum usage peak of memory pool", "pool");
-        catalog.registerNodeGauge("jvm_mem_pool_used_bytes", "Used memory in memory pool", "pool");
-        catalog.registerNodeGauge("jvm_mem_pool_peak_used_bytes", "Used memory peak in memory pool", "pool");
+        catalog.registerNodeGaugeUnit("jvm_mem_pool_max", "bytes", "Maximum amount of memory, in bytes, available for use by the pool", "pool");
+        catalog.registerNodeGaugeUnit("jvm_mem_pool_peak_max", "bytes", "Largest amount of memory historically used by the memory pool", "pool");
+        catalog.registerNodeGaugeUnit("jvm_mem_pool_used", "bytes", "Memory, in bytes, used by the the memory pool", "pool");
+        catalog.registerNodeGaugeUnit("jvm_mem_pool_peak_used", "bytes", "Maximum amount of memory, in bytes, available for use by the pool", "pool");
 
-        catalog.registerNodeGauge("jvm_threads_number", "Number of threads");
-        catalog.registerNodeGauge("jvm_threads_peak_number", "Peak number of threads");
+        catalog.registerNodeGauge("jvm_threads_number", "Number of active threads in use by JVM");
+        catalog.registerNodeGauge("jvm_threads_peak_number", "Highest number of threads used by JVM");
 
         catalog.registerNodeGauge("jvm_gc_collection_count", "Count of GC collections", "gc");
-        catalog.registerNodeGauge("jvm_gc_collection_time_seconds", "Time spent for GC collections", "gc");
+        catalog.registerNodeGaugeUnit("jvm_gc_collection_time", "seconds", "Time spent for GC collections", "gc");
 
-        catalog.registerNodeGauge("jvm_bufferpool_number", "Number of buffer pools", "bufferpool");
-        catalog.registerNodeGauge("jvm_bufferpool_total_capacity_bytes", "Total capacity provided by buffer pools",
-                "bufferpool");
-        catalog.registerNodeGauge("jvm_bufferpool_used_bytes", "Used memory in buffer pools", "bufferpool");
+        catalog.registerNodeGauge("jvm_bufferpool_number", "Estimated number of buffers in the pool", "bufferpool");
+        catalog.registerNodeGaugeUnit("jvm_bufferpool_total_capacity", "bytes", "Estimate of the total capacity, in bytes, of the pool", "bufferpool");
+        catalog.registerNodeGaugeUnit("jvm_bufferpool_used", "bytes", "Current memory that the JVM is using for this pool", "bufferpool");
 
-        catalog.registerNodeGauge("jvm_classes_loaded_number", "Count of loaded classes");
-        catalog.registerNodeGauge("jvm_classes_total_loaded_number", "Total count of loaded classes");
-        catalog.registerNodeGauge("jvm_classes_unloaded_number", "Count of unloaded classes");
+        catalog.registerNodeGauge("jvm_classes_loaded_number", "Number of classes currently loaded by JVM");
+        catalog.registerNodeGauge("jvm_classes_total_loaded_number", "Total number of classes loaded since the JVM started");
+        catalog.registerNodeGauge("jvm_classes_unloaded_number", "Total number of classes unloaded since the JVM started");
     }
 
     private void updateJVMMetrics(JvmStats jvm) {
         if (jvm != null) {
-            catalog.setNodeGauge("jvm_uptime_seconds", jvm.getUptime().millis() / 1000.0);
+            catalog.setNodeGauge("jvm_uptime", jvm.getUptime().millis() / 1E3);
 
-            catalog.setNodeGauge("jvm_mem_heap_max_bytes", jvm.getMem().getHeapMax().getBytes());
-            catalog.setNodeGauge("jvm_mem_heap_used_bytes", jvm.getMem().getHeapUsed().getBytes());
+            catalog.setNodeGauge("jvm_mem_heap_max", jvm.getMem().getHeapMax().getBytes());
+            catalog.setNodeGauge("jvm_mem_heap_used", jvm.getMem().getHeapUsed().getBytes());
             catalog.setNodeGauge("jvm_mem_heap_used_percent", jvm.getMem().getHeapUsedPercent());
-            catalog.setNodeGauge("jvm_mem_nonheap_used_bytes", jvm.getMem().getNonHeapUsed().getBytes());
-            catalog.setNodeGauge("jvm_mem_heap_committed_bytes", jvm.getMem().getHeapCommitted().getBytes());
-            catalog.setNodeGauge("jvm_mem_nonheap_committed_bytes", jvm.getMem().getNonHeapCommitted().getBytes());
+            catalog.setNodeGauge("jvm_mem_nonheap_used", jvm.getMem().getNonHeapUsed().getBytes());
+            catalog.setNodeGauge("jvm_mem_heap_committed", jvm.getMem().getHeapCommitted().getBytes());
+            catalog.setNodeGauge("jvm_mem_nonheap_committed", jvm.getMem().getNonHeapCommitted().getBytes());
 
             for (JvmStats.MemoryPool mp : jvm.getMem()) {
                 String name = mp.getName();
-                catalog.setNodeGauge("jvm_mem_pool_max_bytes", mp.getMax().getBytes(), name);
-                catalog.setNodeGauge("jvm_mem_pool_peak_max_bytes", mp.getPeakMax().getBytes(), name);
-                catalog.setNodeGauge("jvm_mem_pool_used_bytes", mp.getUsed().getBytes(), name);
-                catalog.setNodeGauge("jvm_mem_pool_peak_used_bytes", mp.getPeakUsed().getBytes(), name);
+                catalog.setNodeGauge("jvm_mem_pool_max", mp.getMax().getBytes(), name);
+                catalog.setNodeGauge("jvm_mem_pool_peak_max", mp.getPeakMax().getBytes(), name);
+                catalog.setNodeGauge("jvm_mem_pool_used", mp.getUsed().getBytes(), name);
+                catalog.setNodeGauge("jvm_mem_pool_peak_used", mp.getPeakUsed().getBytes(), name);
             }
 
             catalog.setNodeGauge("jvm_threads_number", jvm.getThreads().getCount());
@@ -911,14 +911,14 @@ public class PrometheusMetricsCollector {
             for (JvmStats.GarbageCollector gc : jvm.getGc().getCollectors()) {
                 String name = gc.getName();
                 catalog.setNodeGauge("jvm_gc_collection_count", gc.getCollectionCount(), name);
-                catalog.setNodeGauge("jvm_gc_collection_time_seconds", gc.getCollectionTime().millis() / 1000.0, name);
+                catalog.setNodeGauge("jvm_gc_collection_time", gc.getCollectionTime().millis() / 1E3, name);
             }
 
             for (JvmStats.BufferPool bp : jvm.getBufferPools()) {
                 String name = bp.getName();
                 catalog.setNodeGauge("jvm_bufferpool_number", bp.getCount(), name);
-                catalog.setNodeGauge("jvm_bufferpool_total_capacity_bytes", bp.getTotalCapacity().getBytes(), name);
-                catalog.setNodeGauge("jvm_bufferpool_used_bytes", bp.getUsed().getBytes(), name);
+                catalog.setNodeGauge("jvm_bufferpool_total_capacity", bp.getTotalCapacity().getBytes(), name);
+                catalog.setNodeGauge("jvm_bufferpool_used", bp.getUsed().getBytes(), name);
             }
             if (jvm.getClasses() != null) {
                 catalog.setNodeGauge("jvm_classes_loaded_number", jvm.getClasses().getLoadedClassCount());
