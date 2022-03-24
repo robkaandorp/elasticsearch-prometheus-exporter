@@ -31,7 +31,7 @@ import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.cluster.health.ClusterIndexHealth;
 import org.elasticsearch.cluster.node.DiscoveryNodeRole;
 import org.elasticsearch.common.util.set.Sets;
-import org.elasticsearch.core.TimeValue;
+import org.elasticsearch.discovery.DiscoveryStats;
 import org.elasticsearch.http.HttpStats;
 import org.elasticsearch.index.stats.IndexingPressureStats;
 import org.elasticsearch.indices.NodeIndicesStats;
@@ -52,7 +52,6 @@ import org.elasticsearch.transport.TransportStats;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import io.prometheus.client.Summary;
 
@@ -94,6 +93,7 @@ public class PrometheusMetricsCollector {
         registerESSettings();
         registerIndexingPressure();
         registerAdaptiveSelection();
+        registerDiscovery();
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -1186,6 +1186,61 @@ public class PrometheusMetricsCollector {
         }
     }
 
+    @SuppressWarnings("checkstyle:LineLength")
+    private void registerDiscovery() {
+        catalog.registerNodeGauge("discovery_cluster_state_queue_number", "Total number of cluster states in the node cluster state queue");
+        catalog.registerNodeGauge("discovery_cluster_state_queue_pending", "Number of pending cluster states in the node cluster state queue");
+        catalog.registerNodeGauge("discovery_cluster_state_queue_committed", "Number of committed cluster states in the node cluster state queue");
+        catalog.registerNodeCounter("discovery_published_cluster_states_full_states", "Total number of published cluster states");
+        catalog.registerNodeCounter("discovery_published_cluster_states_incompatible_diffs", "Total number of incompatible differences between published cluster states");
+        catalog.registerNodeCounter("discovery_published_cluster_states_compatible_diffs", "Total number of compatible differences between published cluster states");
+        catalog.registerNodeCounter("discovery_cluster_state_update", "The number of cluster state update attempts", "state");
+        catalog.registerNodeCounterUnit("discovery_cluster_state_update_computation_time", "seconds", "The cumulative amount of time, in seconds, spent computing state update", "state");
+        catalog.registerNodeCounterUnit("discovery_cluster_state_update_notification_time", "seconds", "The cumulative amount of time spent, in seconds, spent notifying this state update", "state");
+        catalog.registerNodeCounterUnit("discovery_cluster_state_update_publication_time", "seconds", "The cumulative amount of time spent, in seconds, spent publishing this state update", "state");
+        catalog.registerNodeCounterUnit("discovery_cluster_state_update_context_construction_time", "seconds", "The cumulative amount of time spent, in seconds, spent creating context for this state update", "state");
+        catalog.registerNodeCounterUnit("discovery_cluster_state_update_commit_time", "seconds", "The cumulative amount of time spent, in seconds, spent committing this state update", "state");
+        catalog.registerNodeCounterUnit("discovery_cluster_state_update_completion_time", "seconds", "The cumulative amount of time spent, in seconds, spent completing this state update", "state");
+        catalog.registerNodeCounterUnit("discovery_cluster_state_update_master_apply_time", "seconds", "The cumulative amount of time spent, in seconds, spent by the master applying this state update", "state");
+    }
+
+    @SuppressWarnings("checkstyle:LineLength")
+    private void updateDiscovery(DiscoveryStats ds) {
+        if (ds != null) {
+            catalog.setNodeGauge("discovery_cluster_state_queue_number", ds.getQueueStats().getTotal());
+            catalog.setNodeGauge("discovery_cluster_state_queue_pending", ds.getQueueStats().getPending());
+            catalog.setNodeGauge("discovery_cluster_state_queue_committed", ds.getQueueStats().getCommitted());
+            catalog.setNodeCounter("discovery_published_cluster_states_full_states", ds.getPublishStats().getFullClusterStateReceivedCount());
+            catalog.setNodeCounter("discovery_published_cluster_states_incompatible_diffs", ds.getPublishStats().getIncompatibleClusterStateDiffReceivedCount());
+            catalog.setNodeCounter("discovery_published_cluster_states_compatible_diffs", ds.getPublishStats().getCompatibleClusterStateDiffReceivedCount());
+
+            ClusterStateUpdateStats csu = ds.getClusterStateUpdateStats();
+            if (csu != null) {
+                catalog.setNodeCounter("discovery_cluster_state_update", csu.getUnchangedTaskCount(), "unchanged");
+                catalog.setNodeCounter("discovery_cluster_state_update_computation_time", csu.getUnchangedComputationElapsedMillis() / 1E3, "unchanged");
+                catalog.setNodeCounter("discovery_cluster_state_update_notification_time", csu.getUnchangedNotificationElapsedMillis() / 1E3, "unchanged");
+
+                catalog.setNodeCounter("discovery_cluster_state_update", csu.getPublicationSuccessCount(), "success");
+                catalog.setNodeCounter("discovery_cluster_state_update_computation_time", csu.getSuccessfulComputationElapsedMillis() / 1E3, "success");
+                catalog.setNodeCounter("discovery_cluster_state_update_notification_time", csu.getSuccessfulNotificationElapsedMillis() / 1E3, "success");
+                catalog.setNodeCounter("discovery_cluster_state_update_publication_time", csu.getSuccessfulNotificationElapsedMillis() / 1E3, "success");
+                catalog.setNodeCounter("discovery_cluster_state_update_context_construction_time", csu.getSuccessfulContextConstructionElapsedMillis() / 1E3, "success");
+                catalog.setNodeCounter("discovery_cluster_state_update_commit_time", csu.getSuccessfulCommitElapsedMillis() / 1E3, "success");
+                catalog.setNodeCounter("discovery_cluster_state_update_completion_time", csu.getSuccessfulCompletionElapsedMillis() / 1E3, "success");
+                catalog.setNodeCounter("discovery_cluster_state_update_master_apply_time", csu.getSuccessfulCommitElapsedMillis() / 1E3, "success");
+
+                catalog.setNodeCounter("discovery_cluster_state_update", csu.getPublicationFailureCount(), "success");
+                catalog.setNodeCounter("discovery_cluster_state_update_computation_time", csu.getFailedComputationElapsedMillis() / 1E3, "failure");
+                catalog.setNodeCounter("discovery_cluster_state_update_notification_time", csu.getFailedNotificationElapsedMillis() / 1E3, "failure");
+                catalog.setNodeCounter("discovery_cluster_state_update_publication_time", csu.getFailedNotificationElapsedMillis() / 1E3, "failure");
+                catalog.setNodeCounter("discovery_cluster_state_update_context_construction_time", csu.getFailedContextConstructionElapsedMillis() / 1E3, "failure");
+                catalog.setNodeCounter("discovery_cluster_state_update_commit_time", csu.getFailedCommitElapsedMillis() / 1E3, "failure");
+                catalog.setNodeCounter("discovery_cluster_state_update_completion_time", csu.getFailedCompletionElapsedMillis() / 1E3, "failure");
+                catalog.setNodeCounter("discovery_cluster_state_update_master_apply_time", csu.getFailedCommitElapsedMillis() / 1E3, "failure");
+            }
+        }
+    }
+
     public void updateMetrics(ClusterHealthResponse clusterHealthResponse, NodeStats nodeStats,
                               IndicesStatsResponse indicesStats, ClusterStatsData clusterStatsData) {
         Summary.Timer timer = catalog.startSummaryTimer("metrics_generate_time_seconds");
@@ -1208,6 +1263,7 @@ public class PrometheusMetricsCollector {
         updateFsMetrics(nodeStats.getFs());
         updateIndexingPressure(nodeStats.getIndexingPressureStats());
         updateAdaptiveSelection(nodeStats.getAdaptiveSelectionStats());
+        updateDiscovery(nodeStats.getDiscoveryStats());
         if (isPrometheusClusterSettings) {
             updateESSettings(clusterStatsData);
         }
