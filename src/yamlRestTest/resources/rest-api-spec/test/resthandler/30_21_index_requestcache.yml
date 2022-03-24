@@ -29,7 +29,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_requestcache_memory_size_bytes (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_requestcache_memory_size_bytes (\s|\w|\d|,)+ \n
         \# \s TYPE \s es_index_requestcache_memory_size_bytes \s gauge \n
         (
           es_index_requestcache_memory_size_bytes\{
@@ -41,7 +41,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_requestcache_hit_count (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_requestcache_hit_count (\s|\w|\d|,)+ \n
         \# \s TYPE \s es_index_requestcache_hit_count \s gauge \n
         (
           es_index_requestcache_hit_count\{
@@ -53,7 +53,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_requestcache_miss_count (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_requestcache_miss_count (\s|\w|\d|,)+ \n
         \# \s TYPE \s es_index_requestcache_miss_count \s gauge \n
         (
           es_index_requestcache_miss_count\{
@@ -65,7 +65,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_requestcache_evictions_count (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_requestcache_evictions_count (\s|\w|\d|,)+ \n
         \# \s TYPE \s es_index_requestcache_evictions_count \s gauge \n
         (
           es_index_requestcache_evictions_count\{

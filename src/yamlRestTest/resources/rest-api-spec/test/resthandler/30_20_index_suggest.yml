@@ -29,7 +29,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_suggest_current_number (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_suggest_current_number .+ \n
         \# \s TYPE \s es_index_suggest_current_number \s gauge \n
         (
           es_index_suggest_current_number\{
@@ -41,7 +41,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_suggest_count (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_suggest_count .+ \n
         \# \s TYPE \s es_index_suggest_count \s gauge \n
         (
           es_index_suggest_count\{
@@ -53,7 +53,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_suggest_time_seconds (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_suggest_time_seconds .+ \n
         \# \s TYPE \s es_index_suggest_time_seconds \s gauge \n
         (
           es_index_suggest_time_seconds\{

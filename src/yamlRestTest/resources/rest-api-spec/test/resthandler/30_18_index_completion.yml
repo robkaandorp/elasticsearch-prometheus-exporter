@@ -29,7 +29,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_completion_size_bytes (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_completion_size_bytes (\s|\w|\d|,)+ \n
         \# \s TYPE \s es_index_completion_size_bytes \s gauge \n
         (
           es_index_completion_size_bytes\{

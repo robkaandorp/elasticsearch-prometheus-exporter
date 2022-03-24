@@ -29,7 +29,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_segments_number (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_segments_number .+ \n
         \# \s TYPE \s es_index_segments_number \s gauge \n
         (
           es_index_segments_number\{
@@ -41,7 +41,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_segments_memory_bytes (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_segments_memory_bytes .+ \n
         \# \s TYPE \s es_index_segments_memory_bytes \s gauge \n
         (
           es_index_segments_memory_bytes\{

@@ -29,7 +29,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_querycache_cache_count (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_querycache_cache_count .+ \n
         \# \s TYPE \s es_index_querycache_cache_count \s gauge \n
         (
           es_index_querycache_cache_count\{
@@ -41,7 +41,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_querycache_cache_size_bytes (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_querycache_cache_size_bytes .+ \n
         \# \s TYPE \s es_index_querycache_cache_size_bytes \s gauge \n
         (
           es_index_querycache_cache_size_bytes\{
@@ -53,7 +53,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_querycache_evictions_count (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_querycache_evictions_count .+ \n
         \# \s TYPE \s es_index_querycache_evictions_count \s gauge \n
         (
           es_index_querycache_evictions_count\{
@@ -65,7 +65,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_querycache_hit_count (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_querycache_hit_count .+ \n
         \# \s TYPE \s es_index_querycache_hit_count \s gauge \n
         (
           es_index_querycache_hit_count\{
@@ -77,7 +77,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_querycache_memory_size_bytes (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_querycache_memory_size_bytes .+ \n
         \# \s TYPE \s es_index_querycache_memory_size_bytes \s gauge \n
         (
           es_index_querycache_memory_size_bytes\{
@@ -89,7 +89,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_querycache_miss_number (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_querycache_miss_number .+ \n
         \# \s TYPE \s es_index_querycache_miss_number \s gauge \n
         (
           es_index_querycache_miss_number\{
@@ -101,7 +101,7 @@
   - match:
       $body: |
         /.*
-        \# \s HELP \s es_index_querycache_total_number (\s|\w|\d)+ \n
+        \# \s HELP \s es_index_querycache_total_number .+ \n
         \# \s TYPE \s es_index_querycache_total_number \s gauge \n
         (
           es_index_querycache_total_number\{

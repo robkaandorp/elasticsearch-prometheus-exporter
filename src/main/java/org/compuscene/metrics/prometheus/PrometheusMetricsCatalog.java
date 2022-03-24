@@ -157,6 +157,29 @@ public class PrometheusMetricsCatalog {
         enumeration.labels(getExtendedClusterLabelValues(labelValues)).state(state);
     }
 
+    public void registerClusterCounterUnit(String metric, String unit, String help, String... labels) {
+        Counter counter = Counter.build().
+                withoutExemplars().
+                name(metricPrefix + metric).
+                unit(unit).
+                help(help).
+                labelNames(getExtendedClusterLabelNames(labels)).
+                register(registry);
+
+        metrics.put(metric, counter);
+
+        logger.debug(String.format(Locale.ENGLISH, "Registered new cluster counter %s", metric));
+    }
+
+    public void registerClusterCounter(String metric, String help, String... labels) {
+        registerClusterCounterUnit(metric, "", help, labels);
+    }
+
+    public void setClusterCounter(String metric, double value, String... labelValues) {
+        Counter counter = (Counter) metrics.get(metric);
+        counter.labels(getExtendedClusterLabelValues(labelValues)).inc(value);
+    }
+
     public void registerClusterGaugeUnit(String metric, String unit, String help, String... labels) {
         Gauge gauge = Gauge.build().
                 name(metricPrefix + metric).
