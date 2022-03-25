@@ -20,6 +20,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
     - Circuit Breaker
 - Indices status
 - Cluster settings (selected [disk allocation settings](https://www.elastic.co/guide/en/elasticsearch/reference/master/disk-allocator.html) only)
+- Prometheus HotSpot metrics
 
 ## Compatibility matrix
 
@@ -27,6 +28,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 
 | Elasticsearch | Plugin   | Release date |
 |---------------|----------|--------------|
+| 7.17.1        | 7.17.1.1 | Mar 25, 2022 |
 | 7.17.1        | 7.17.1.0 | Feb 28, 2022 |
 | 7.17.0        | 7.17.0.2 | Feb 28, 2022 |
 | 7.16.2        | 7.16.2.0 | Dec 20, 2021 |
@@ -174,7 +176,7 @@ framework.
 
 To run everything similar to the GitHub Actions pipeline you can do:
 ```
-docker run -v $(pwd):/home/gradle gradle:7.0.2-jdk16 su gradle -c 'gradle check'
+docker run -v $(pwd):/home/gradle gradle:7.4.1-jdk17 su gradle -c 'gradle check'
 ```
 NOTE: Please keep version in sync with .github/workflows/ci.yml
 
