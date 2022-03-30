@@ -1,4 +1,4 @@
-![CI](https://github.com/vvanholl/elasticsearch-prometheus-exporter/workflows/CI/badge.svg?branch=master)
+![CI](https://github.com/mindw/elasticsearch-prometheus-exporter/workflows/CI/badge.svg?branch=master)
 
 # Prometheus Exporter Plugin for Elasticsearch
 
@@ -34,7 +34,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 - Expose JVM cgroups metrics.
 - Expose Elasticsearch node version.
 - Expand FS metrics with per device metrics
-- Get all times in milliseconds to avoid losing sub second prevision.
+- Get all times in milliseconds to avoid losing sub second precision.
 - Fixed `threadpool` metrics
 - Add prometheus `client_hotspot` metrics.  
 - Fixed test suite.
