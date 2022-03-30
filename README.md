@@ -1,5 +1,4 @@
-![CI](https://github.com/mindw/elasticsearch-prometheus-exporter/workflows/CI/badge.svg?branch=master)
-
+[![build status](https://github.com/mindw/elasticsearch-prometheus-exporter/workflows/CI/badge.svg?branch=master)](https://github.com/mindw/elasticsearch-prometheus-exporter/actions/workflows/ci.yml)
 # Prometheus Exporter Plugin for Elasticsearch
 
 This is a builtin exporter from Elasticsearch to Prometheus.
@@ -53,7 +52,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 
 ## Install
 
-`./bin/elasticsearch-plugin install -b https://github.com/vvanholl/elasticsearch-prometheus-exporter/releases/download/7.16.3.0/prometheus-exporter-7.16.3.0.zip`
+`./bin/elasticsearch-plugin install -b https://github.com/mindw/elasticsearch-prometheus-exporter/releases/download/8.1.1.0/prometheus-exporter-8.1.1.0.zip`
 
 **Do not forget to restart the node after the installation!**
 
