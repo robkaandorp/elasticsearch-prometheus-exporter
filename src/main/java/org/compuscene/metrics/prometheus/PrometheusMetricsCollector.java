@@ -176,7 +176,7 @@ public class PrometheusMetricsCollector {
             var build = Build.CURRENT;
             catalog.setNodeInfo(
                     "node_version",
-                    build.getQualifiedVersion(),
+                    build.qualifiedVersion(),
                     build.flavor().displayName(),
                     build.type().displayName(),
                     build.hash(),
@@ -383,16 +383,16 @@ public class PrometheusMetricsCollector {
             catalog.setNodeGauge("indices_completion_size", idx.getCompletion().getSizeInBytes());
 
             catalog.setNodeGauge("indices_segments_number", idx.getSegments().getCount());
-            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getMemoryInBytes(), "all");
+            catalog.setNodeGauge("indices_segments_memory", 0, "all");
             catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getBitsetMemoryInBytes(), "bitset");
-            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getDocValuesMemoryInBytes(), "docvalues");
-            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getIndexWriterMemoryInBytes(), "indexwriter");
-            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getNormsMemoryInBytes(), "norms");
-            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getStoredFieldsMemoryInBytes(), "storefields");
-            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getTermsMemoryInBytes(), "terms");
-            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getTermVectorsMemoryInBytes(), "termvectors");
+            catalog.setNodeGauge("indices_segments_memory", 0, "docvalues");
+            catalog.setNodeGauge("indices_segments_memory", 0, "indexwriter");
+            catalog.setNodeGauge("indices_segments_memory", 0, "norms");
+            catalog.setNodeGauge("indices_segments_memory", 0, "storefields");
+            catalog.setNodeGauge("indices_segments_memory", 0, "terms");
+            catalog.setNodeGauge("indices_segments_memory", 0, "termvectors");
             catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getVersionMapMemoryInBytes(), "versionmap");
-            catalog.setNodeGauge("indices_segments_memory", idx.getSegments().getPointsMemoryInBytes(), "points");
+            catalog.setNodeGauge("indices_segments_memory", 0, "points");
             catalog.setNodeGauge("indices_segments_max_unsafe_auto_id_timestamp", idx.getSegments().getMaxUnsafeAutoIdTimestamp() / 1000.0);
 
             catalog.setNodeGauge("indices_translog_operations_number", idx.getTranslog().estimatedNumberOfOperations());
@@ -615,16 +615,16 @@ public class PrometheusMetricsCollector {
         catalog.setClusterGauge("index_completion_size", idx.getCompletion().getSizeInBytes(), indexName, context);
 
         catalog.setClusterGauge("index_segments_number", idx.getSegments().getCount(), indexName, context);
-        catalog.setClusterGauge("index_segments_memory", idx.getSegments().getMemoryInBytes(), "all", indexName, context);
+        catalog.setClusterGauge("index_segments_memory", 0, "all", indexName, context);
         catalog.setClusterGauge("index_segments_memory", idx.getSegments().getBitsetMemoryInBytes(), "bitset", indexName, context);
-        catalog.setClusterGauge("index_segments_memory", idx.getSegments().getDocValuesMemoryInBytes(), "docvalues", indexName, context);
+        catalog.setClusterGauge("index_segments_memory", 0, "docvalues", indexName, context);
         catalog.setClusterGauge("index_segments_memory", idx.getSegments().getIndexWriterMemoryInBytes(), "indexwriter", indexName, context);
-        catalog.setClusterGauge("index_segments_memory", idx.getSegments().getNormsMemoryInBytes(), "norms", indexName, context);
-        catalog.setClusterGauge("index_segments_memory", idx.getSegments().getStoredFieldsMemoryInBytes(), "storefields", indexName, context);
-        catalog.setClusterGauge("index_segments_memory", idx.getSegments().getTermsMemoryInBytes(), "terms", indexName, context);
-        catalog.setClusterGauge("index_segments_memory", idx.getSegments().getTermVectorsMemoryInBytes(), "termvectors", indexName, context);
+        catalog.setClusterGauge("index_segments_memory", 0, "norms", indexName, context);
+        catalog.setClusterGauge("index_segments_memory", 0, "storefields", indexName, context);
+        catalog.setClusterGauge("index_segments_memory", 0, "terms", indexName, context);
+        catalog.setClusterGauge("index_segments_memory", 0, "termvectors", indexName, context);
         catalog.setClusterGauge("index_segments_memory", idx.getSegments().getVersionMapMemoryInBytes(), "versionmap", indexName, context);
-        catalog.setClusterGauge("index_segments_memory", idx.getSegments().getPointsMemoryInBytes(), "points", indexName, context);
+        catalog.setClusterGauge("index_segments_memory", 0, "points", indexName, context);
         catalog.setClusterGauge("index_segments_max_unsafe_auto_id_timestamp", idx.getSegments().getMaxUnsafeAutoIdTimestamp() / 1E3,  indexName, context);
 
         catalog.setClusterGauge("index_suggest_current_number", idx.getSearch().getTotal().getSuggestCurrent(), indexName, context);
