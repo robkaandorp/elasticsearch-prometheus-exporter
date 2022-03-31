@@ -1,4 +1,6 @@
 [![build status](https://github.com/mindw/elasticsearch-prometheus-exporter/workflows/CI/badge.svg?branch=master)](https://github.com/mindw/elasticsearch-prometheus-exporter/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/mindw/elasticsearch-prometheus-exporter/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/mindw/elasticsearch-prometheus-exporter/actions/workflows/codeql-analysis.yml)
+
 # Prometheus Exporter Plugin for Elasticsearch
 
 This is a builtin exporter from Elasticsearch to Prometheus.
