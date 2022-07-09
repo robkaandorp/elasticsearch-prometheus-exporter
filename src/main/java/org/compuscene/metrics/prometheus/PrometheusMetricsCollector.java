@@ -177,7 +177,7 @@ public class PrometheusMetricsCollector {
             catalog.setNodeInfo(
                     "node_version",
                     build.qualifiedVersion(),
-                    build.flavor().displayName(),
+                    "default",
                     build.type().displayName(),
                     build.hash(),
                     build.date()
@@ -1154,17 +1154,7 @@ public class PrometheusMetricsCollector {
             catalog.setNodeCounter("indexing_pressure_memory_coordinating_rejections", ips.getCoordinatingRejections());
             catalog.setNodeCounter("indexing_pressure_memory_primary_rejections", ips.getPrimaryRejections());
             catalog.setNodeCounter("indexing_pressure_memory_replica_rejections", ips.getReplicaRejections());
-
-            try {
-                // elastic doesn't provide an accessor for the memory limit
-                var obj = ips.getClass();
-                Field field = obj.getDeclaredField("memoryLimit");
-                field.setAccessible(true);
-                long memoryLimit = (long) field.get(ips);
-                catalog.setNodeGauge("indexing_pressure_memory", memoryLimit);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                logger.info("failed to access totalOutboundConnections", e);
-            }
+            catalog.setNodeGauge("indexing_pressure_memory", ips.getMemoryLimit());
         }
     }
 

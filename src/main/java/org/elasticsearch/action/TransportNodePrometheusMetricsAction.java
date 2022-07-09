@@ -88,8 +88,8 @@ public class TransportNodePrometheusMetricsAction extends HandledTransportAction
         private ClusterStateResponse clusterStateResponse = null;
 
         // read the state of prometheus dynamic settings only once at the beginning of the async request
-        private boolean isPrometheusIndices = prometheusSettings.getPrometheusIndices();
-        private boolean isPrometheusClusterSettings = prometheusSettings.getPrometheusClusterSettings();
+        private final boolean isPrometheusIndices = prometheusSettings.getPrometheusIndices();
+        private final boolean isPrometheusClusterSettings = prometheusSettings.getPrometheusClusterSettings();
 
         // All the requests are executed in sequential non-blocking order.
         // It is implemented by wrapping each individual request with ActionListener
