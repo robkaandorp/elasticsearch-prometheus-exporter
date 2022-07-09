@@ -20,6 +20,7 @@ buildscript {
 plugins {
     id "java"
     id "checkstyle"
+    id "com.github.ben-manes.versions" version "0.42.0"
 }
 
 apply plugin: 'java'
@@ -50,7 +51,7 @@ repositories {
 ext {
     versions = [
         "elasticsearch": es_version,
-        "prometheus"   : "0.15.0",
+        "prometheus"   : "0.16.0",
         "log4j"        : "2.17.2",
         "junit"        : "4.13.2"
     ]
