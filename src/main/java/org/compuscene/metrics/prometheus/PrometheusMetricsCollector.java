@@ -296,7 +296,7 @@ public class PrometheusMetricsCollector {
         if (idx != null) {
             catalog.setNodeGauge("indices_doc_number", idx.getDocs().getCount());
             catalog.setNodeGauge("indices_doc_deleted_number", idx.getDocs().getDeleted());
-
+/*
             try {
                 var obj = idx.getClass();
                 Field field = obj.getDeclaredField("stats");
@@ -306,7 +306,7 @@ public class PrometheusMetricsCollector {
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 logger.info("failed to access stats", e);
             }
-
+*/
             catalog.setNodeGauge("indices_store_size", idx.getStore().sizeInBytes());
             catalog.setNodeGauge("indices_store_data_set_size", idx.getStore().totalDataSetSizeInBytes());
             catalog.setNodeGauge("indices_store_reserved_size", idx.getStore().getReservedSize().getBytes());
@@ -670,6 +670,7 @@ public class PrometheusMetricsCollector {
     private void updateTransportMetrics(TransportStats ts) {
         if (ts != null) {
             catalog.setNodeGauge("transport_server_open_number", ts.getServerOpen());
+/*
             try {
                 // elastic doesn't provide an accessor for the device name.
                 var obj = ts.getClass();
@@ -680,7 +681,7 @@ public class PrometheusMetricsCollector {
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 logger.info("failed to access totalOutboundConnections", e);
             }
-
+*/
             catalog.setNodeGauge("transport_rx_packets_count", ts.getRxCount());
             catalog.setNodeGauge("transport_tx_packets_count", ts.getTxCount());
             catalog.setNodeCounter("transport_rx_packets", ts.getRxCount());
@@ -1065,6 +1066,8 @@ public class PrometheusMetricsCollector {
                 catalog.setNodeGauge("fs_io_total_write", fs.getIoStats().getTotalWriteKilobytes() * 1024);
                 catalog.setNodeCounter("fs_io_total_io_time", ioStats.getTotalIOTimeMillis() / 1E3);
                 for (FsInfo.DeviceStats dev : ioStats.getDevicesStats()) {
+/*
+
                     try {
                         // elastic doesn't provide an accessor for the device name.
                         var obj = dev.getClass();
@@ -1081,6 +1084,7 @@ public class PrometheusMetricsCollector {
                     } catch (NoSuchFieldException | IllegalAccessException e) {
                         logger.info("failed to access deviceName", e);
                     }
+*/
                 }
             }
         }
