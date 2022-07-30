@@ -47,6 +47,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 
 | Elasticsearch | Plugin   | Release date |
 |---------------|----------|--------------|
+| 8.3.3         | 8.3.3.0  | Jul 30, 2022 |
 | 8.3.2         | 8.3.2.0  | Jul 09, 2022 |
 | 8.3.1         | 8.3.1.0  | Jul 09, 2022 |
 | 8.3.0         | 8.3.0.0  | Jul 09, 2022 |
@@ -62,7 +63,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 
 ## Install
 
-`./bin/elasticsearch-plugin install -b https://github.com/mindw/elasticsearch-prometheus-exporter/releases/download/8.3.2.0/prometheus-exporter-8.3.2.0.zip`
+`./bin/elasticsearch-plugin install -b https://github.com/mindw/elasticsearch-prometheus-exporter/releases/download/8.3.3.0/prometheus-exporter-8.3.3.0.zip`
 
 **Do not forget to restart the node after the installation!**
 
@@ -152,15 +153,15 @@ The Maven project site is available at [GitHub](https://github.com/vvanholl/elas
 
 ## Testing
 
-Project contains [integration tests](src/test/resources/rest-api-spec) implemented using
+Project contains [integration tests](src/yamlRestTest/resources/rest-api-spec) implemented using
 [rest layer](https://github.com/elastic/elasticsearch/blob/master/TESTING.asciidoc#testing-the-rest-layer)
 framework.
 
 To run everything similar to the GitHub Actions pipeline you can do:
 ```
-docker run -v $(pwd):/home/gradle gradle:7.4.1-jdk17 su gradle -c 'gradle check'
+docker run -v $(pwd):/home/gradle gradle:7.4.2-jdk17 su gradle -c 'gradle check'
 ```
-NOTE: Please keep version in sync with .github/workflows/ci.yml
+NOTE: Please keep version in sync with `.github/workflows/ci.yml`
 
 
 Complete test suite is run using:
