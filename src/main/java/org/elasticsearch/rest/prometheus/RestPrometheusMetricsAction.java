@@ -35,9 +35,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.rest.*;
 import org.elasticsearch.rest.action.RestResponseListener;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableList;
-
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
@@ -59,9 +56,7 @@ public class RestPrometheusMetricsAction extends BaseRestHandler {
 
     @Override
     public List<Route> routes() {
-        return unmodifiableList(asList(
-            new Route(GET, "/_prometheus/metrics"))
-        );
+        return List.of(new Route(GET, "/_prometheus/metrics"));
     }
 
     @Override
@@ -88,42 +83,45 @@ public class RestPrometheusMetricsAction extends BaseRestHandler {
         NodePrometheusMetricsRequest metricsRequest = new NodePrometheusMetricsRequest();
 
         return channel -> client.execute(INSTANCE, metricsRequest,
-                new RestResponseListener<NodePrometheusMetricsResponse>(channel) {
+                new RestResponseListener<>(channel) {
 
                     @Override
                     public RestResponse buildResponse(NodePrometheusMetricsResponse response) throws Exception {
-                String clusterName = response.getClusterHealth().getClusterName();
-                String nodeName = response.getNodeStats().getNode().getName();
-                String nodeId = response.getNodeStats().getNode().getId();
-                if (logger.isTraceEnabled()) {
-                    logger.trace("Prepare new Prometheus metric collector for: [{}], [{}], [{}]", clusterName, nodeId,
-                            nodeName);
-                }
-                PrometheusMetricsCatalog catalog = new PrometheusMetricsCatalog(clusterName, nodeName, nodeId, "es_");
-                PrometheusMetricsCollector collector = new PrometheusMetricsCollector(
-                        catalog,
-                        prometheusSettings.getPrometheusIndices(),
-                        prometheusSettings.getPrometheusClusterSettings()
-                );
-                String contentType = catalog.getContentType(acceptHeader);
-                collector.registerMetrics();
-                SpecialPermission.check();
-                String metrics;
-                try {
-                    metrics = AccessController.doPrivileged((PrivilegedExceptionAction<String>) () -> {
-                        collector.updateMetrics(
-                                response.getClusterHealth(),
-                                response.getNodeStats(),
-                                response.getIndicesStats(),
-                                response.getClusterStatsData()
+                        String clusterName = response.getClusterHealth().getClusterName();
+                        String nodeName = response.getNodeStats().getNode().getName();
+                        String nodeId = response.getNodeStats().getNode().getId();
+                        if (logger.isTraceEnabled()) {
+                            logger.trace("Prepare new Prometheus metric collector for: [{}], [{}], [{}]", clusterName,
+                                    nodeId,
+                                    nodeName
+                            );
+                        }
+                        PrometheusMetricsCatalog catalog = new PrometheusMetricsCatalog(
+                                clusterName, nodeName, nodeId, "es_");
+                        PrometheusMetricsCollector collector = new PrometheusMetricsCollector(
+                                catalog,
+                                prometheusSettings.getPrometheusIndices(),
+                                prometheusSettings.getPrometheusClusterSettings()
                         );
-                        return catalog.toTextFormat(contentType);
-                    });
-                } catch (PrivilegedActionException e) {
-                    throw (IOException) e.getCause();
-                }
-                return new BytesRestResponse(RestStatus.OK, contentType, metrics);
-            }
-        });
+                        String contentType = catalog.getContentType(acceptHeader);
+                        collector.registerMetrics();
+                        SpecialPermission.check();
+                        String metrics;
+                        try {
+                            metrics = AccessController.doPrivileged((PrivilegedExceptionAction<String>) () -> {
+                                collector.updateMetrics(
+                                        response.getClusterHealth(),
+                                        response.getNodeStats(),
+                                        response.getIndicesStats(),
+                                        response.getClusterStatsData()
+                                );
+                                return catalog.toTextFormat(contentType);
+                            });
+                        } catch (PrivilegedActionException e) {
+                            throw (IOException) e.getCause();
+                        }
+                        return new RestResponse(RestStatus.OK, contentType, metrics);
+                    }
+                });
     }
 }
