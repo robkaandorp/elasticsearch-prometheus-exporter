@@ -289,6 +289,12 @@ public class PrometheusMetricsCollector {
 
         catalog.registerNodeGauge("indices_recovery_current_number", "Current number of recoveries", "type");
         catalog.registerNodeGaugeUnit("indices_recovery_throttle_time", "seconds", "Time spent while throttling recoveries");
+
+        catalog.registerNodeCounter("indices_bulk_operations", "Total number of bulk operations");
+        catalog.registerNodeCounterUnit("indices_bulk_operations_time", "seconds", "Total time in seconds spent performing bulk operations");
+        catalog.registerNodeGaugeUnit("indices_bulk_operations_average_time", "seconds",  "Average time in seconds spent on a single bulk operation");
+        catalog.registerNodeCounterUnit("indices_bulk_operations_size", "bytes", "Total size in in bytes of all bulk operations");
+        catalog.registerNodeGaugeUnit("indices_bulk_operations_average_size", "bytes",  "Average size of a single bulk operation");
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -296,17 +302,7 @@ public class PrometheusMetricsCollector {
         if (idx != null) {
             catalog.setNodeGauge("indices_doc_number", idx.getDocs().getCount());
             catalog.setNodeGauge("indices_doc_deleted_number", idx.getDocs().getDeleted());
-/*
-            try {
-                var obj = idx.getClass();
-                Field field = obj.getDeclaredField("stats");
-                field.setAccessible(true);
-                CommonStats stats = (CommonStats) field.get(idx);
-                catalog.setNodeGauge("indices_shards_stats_total_count", stats.getShards().getTotalCount());
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                logger.info("failed to access stats", e);
-            }
-*/
+            catalog.setNodeGauge("indices_shards_stats_total_count", idx.getShardCount().getTotalCount());
             catalog.setNodeGauge("indices_store_size", idx.getStore().sizeInBytes());
             catalog.setNodeGauge("indices_store_data_set_size", idx.getStore().totalDataSetSizeInBytes());
             catalog.setNodeGauge("indices_store_reserved_size", idx.getStore().getReservedSize().getBytes());
@@ -409,6 +405,12 @@ public class PrometheusMetricsCollector {
             catalog.setNodeGauge("indices_recovery_current_number", idx.getRecoveryStats().currentAsSource(), "source");
             catalog.setNodeGauge("indices_recovery_current_number", idx.getRecoveryStats().currentAsTarget(), "target");
             catalog.setNodeGauge("indices_recovery_throttle_time", idx.getRecoveryStats().throttleTime().millis() / 1E3);
+
+            catalog.setNodeCounter("indices_bulk_operations", idx.getBulk().getTotalOperations());
+            catalog.setNodeCounter("indices_bulk_operations_time", idx.getBulk().getTotalTimeInMillis() / 1E3);
+            catalog.setNodeGauge("indices_bulk_operations_average_time", idx.getBulk().getAvgTimeInMillis() / 1E3);
+            catalog.setNodeCounter("indices_bulk_operations_size", idx.getBulk().getTotalSizeInBytes());
+            catalog.setNodeGauge("indices_bulk_operations_average_size", idx.getBulk().getAvgSizeInBytes());
         }
     }
 
@@ -670,18 +672,7 @@ public class PrometheusMetricsCollector {
     private void updateTransportMetrics(TransportStats ts) {
         if (ts != null) {
             catalog.setNodeGauge("transport_server_open_number", ts.getServerOpen());
-/*
-            try {
-                // elastic doesn't provide an accessor for the device name.
-                var obj = ts.getClass();
-                Field field = obj.getDeclaredField("totalOutboundConnections");
-                field.setAccessible(true);
-                long totalOutboundConnections = (long) field.get(ts);
-                catalog.setNodeCounter("transport_outbound_connections", totalOutboundConnections);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                logger.info("failed to access totalOutboundConnections", e);
-            }
-*/
+            catalog.setNodeCounter("transport_outbound_connections", ts.totalOutboundConnections());
             catalog.setNodeGauge("transport_rx_packets_count", ts.getRxCount());
             catalog.setNodeGauge("transport_tx_packets_count", ts.getTxCount());
             catalog.setNodeCounter("transport_rx_packets", ts.getRxCount());
@@ -912,9 +903,9 @@ public class PrometheusMetricsCollector {
             for (JvmStats.MemoryPool mp : jvm.getMem()) {
                 String name = mp.getName();
                 catalog.setNodeGauge("jvm_mem_pool_max", mp.getMax().getBytes(), name);
-                catalog.setNodeGauge("jvm_mem_pool_peak_max", mp.getPeakMax().getBytes(), name);
+                // catalog.setNodeGauge("jvm_mem_pool_peak_max", mp.getPeakMax().getBytes(), name);
                 catalog.setNodeGauge("jvm_mem_pool_used", mp.getUsed().getBytes(), name);
-                catalog.setNodeGauge("jvm_mem_pool_peak_used", mp.getPeakUsed().getBytes(), name);
+                // catalog.setNodeGauge("jvm_mem_pool_peak_used", mp.getPeakUsed().getBytes(), name);
             }
 
             catalog.setNodeGauge("jvm_threads_number", jvm.getThreads().getCount());
@@ -953,6 +944,7 @@ public class PrometheusMetricsCollector {
         catalog.registerNodeGaugeUnit("os_mem_used", "bytes", "Amount of used physical memory in bytes");
         catalog.registerNodeGauge("os_mem_used_percent", "Percentage of used memory");
         catalog.registerNodeGaugeUnit("os_mem_total", "bytes", "Total amount of physical memory in bytes");
+        catalog.registerNodeGaugeUnit("os_mem_adjusted", "bytes", "Overridden amount of memory in bytes as set in `es.total_memory_bytes`. Otherwise same as os_mem_total");
 
         catalog.registerNodeGaugeUnit("os_swap_free", "bytes", "Amount of free swap space in bytes");
         catalog.registerNodeGaugeUnit("os_swap_used", "bytes", "Amount of used swap space in bytes");
@@ -989,6 +981,7 @@ public class PrometheusMetricsCollector {
                 catalog.setNodeGauge("os_mem_used", mem.getUsed().getBytes());
                 catalog.setNodeGauge("os_mem_used_percent", mem.getUsedPercent());
                 catalog.setNodeGauge("os_mem_total", mem.getTotal().getBytes());
+                catalog.setNodeGauge("os_mem_adjusted", mem.getAdjustedTotal().getBytes());
             }
 
             if (os.getSwap() != null) {
@@ -1066,25 +1059,14 @@ public class PrometheusMetricsCollector {
                 catalog.setNodeGauge("fs_io_total_write", fs.getIoStats().getTotalWriteKilobytes() * 1024);
                 catalog.setNodeCounter("fs_io_total_io_time", ioStats.getTotalIOTimeMillis() / 1E3);
                 for (FsInfo.DeviceStats dev : ioStats.getDevicesStats()) {
-/*
+                    String deviceName = dev.getDeviceName();
 
-                    try {
-                        // elastic doesn't provide an accessor for the device name.
-                        var obj = dev.getClass();
-                        Field field = obj.getDeclaredField("deviceName");
-                        field.setAccessible(true);
-                        String deviceName = (String) field.get(dev);
-
-                        catalog.setNodeCounter("fs_io_device_operations", dev.operations(), deviceName);
-                        catalog.setNodeCounter("fs_io_device_read_operations", dev.readOperations(), deviceName);
-                        catalog.setNodeCounter("fs_io_device_write_operations", dev.writeOperations(), deviceName);
-                        catalog.setNodeCounter("fs_io_device_read", dev.readKilobytes() * 1024, deviceName);
-                        catalog.setNodeCounter("fs_io_device_write", dev.writeKilobytes() * 1024, deviceName);
-                        catalog.setNodeCounter("fs_io_device_io_time", dev.ioTimeInMillis() / 1E3, deviceName);
-                    } catch (NoSuchFieldException | IllegalAccessException e) {
-                        logger.info("failed to access deviceName", e);
-                    }
-*/
+                    catalog.setNodeCounter("fs_io_device_operations", dev.operations(), deviceName);
+                    catalog.setNodeCounter("fs_io_device_read_operations", dev.readOperations(), deviceName);
+                    catalog.setNodeCounter("fs_io_device_write_operations", dev.writeOperations(), deviceName);
+                    catalog.setNodeCounter("fs_io_device_read", dev.readKilobytes() * 1024, deviceName);
+                    catalog.setNodeCounter("fs_io_device_write", dev.writeKilobytes() * 1024, deviceName);
+                    catalog.setNodeCounter("fs_io_device_io_time", dev.ioTimeInMillis() / 1E3, deviceName);
                 }
             }
         }
