@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - "master"
-      - "6.x"
       - "7.x"
   pull_request:
     branches:
       - "master"
-      - "6.x"
       - "7.x"
 
 env:
@@ -18,7 +16,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
