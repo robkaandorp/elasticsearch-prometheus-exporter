@@ -55,5 +55,5 @@ jobs:
         is_snapshot=$(echo ${version} | grep -e "-SNAPSHOT$" | wc -l)
         if [ "$is_snapshot" == "0" ]; then
             echo ${{ github.token }} | gh auth login --with-token
-            gh release create ${version} ./build/distributions/*.zip
+            gh release create ${version} ./build/distributions/*.zip -n "${version}" 
         fi
