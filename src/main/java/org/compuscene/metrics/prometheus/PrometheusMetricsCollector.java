@@ -1004,7 +1004,14 @@ public class PrometheusMetricsCollector {
                 catalog.setNodeGauge("os_cgroup_cpu_cfs_stat_time_throttled", cgroup.getCpuStat().getTimeThrottledNanos() / 1E9);
                 catalog.setNodeGauge("os_cgroup_cpu_cfs_period", cgroup.getCpuCfsPeriodMicros() / 1E6);
                 catalog.setNodeGauge("os_cgroup_cpu_cfs_quota", cgroup.getCpuCfsQuotaMicros() / 1E6);
-                catalog.setNodeGauge("os_cgroup_memory_limit", Double.parseDouble(cgroup.getMemoryLimitInBytes()));
+                // limit in CGroupsV2 limit can be a string - "max" so in that case we give it os_mem_total value
+                double limit;
+                try {
+                    limit = Double.parseDouble(cgroup.getMemoryLimitInBytes());
+                } catch (NumberFormatException e) {
+                    limit = os.getMem().getTotal().getBytes();
+                }
+                catalog.setNodeGauge("os_cgroup_memory_limit", limit);
                 catalog.setNodeGauge("os_cgroup_memory_usage", Double.parseDouble(cgroup.getMemoryUsageInBytes()));
             }
         }
