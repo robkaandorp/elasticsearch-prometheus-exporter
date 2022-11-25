@@ -295,6 +295,10 @@ public class PrometheusMetricsCollector {
         catalog.registerNodeGaugeUnit("indices_bulk_operations_average_time", "seconds",  "Average time in seconds spent on a single bulk operation");
         catalog.registerNodeCounterUnit("indices_bulk_operations_size", "bytes", "Total size in in bytes of all bulk operations");
         catalog.registerNodeGaugeUnit("indices_bulk_operations_average_size", "bytes",  "Average size of a single bulk operation");
+
+        catalog.registerNodeGauge("indices_node_mapping_total_count", "Number of mappings, including <<runtime,runtime>> and <<object,object>> fields");
+        catalog.registerNodeGaugeUnit("indices_node_mapping_total_estimated_overhead", "bytes", "Estimated heap overhead, in bytes, of mappings on this node, which allows for 1kiB of heap for every mapped field.");
+
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -411,6 +415,9 @@ public class PrometheusMetricsCollector {
             catalog.setNodeGauge("indices_bulk_operations_average_time", idx.getBulk().getAvgTimeInMillis() / 1E3);
             catalog.setNodeCounter("indices_bulk_operations_size", idx.getBulk().getTotalSizeInBytes());
             catalog.setNodeGauge("indices_bulk_operations_average_size", idx.getBulk().getAvgSizeInBytes());
+
+            catalog.setNodeGauge("indices_node_mapping_total_count", idx.getNodeMappingStats().getTotalCount());
+            catalog.setNodeGauge("indices_node_mapping_total_estimated_overhead", idx.getNodeMappingStats().getTotalEstimatedOverhead().getBytes());
         }
     }
 
@@ -518,6 +525,10 @@ public class PrometheusMetricsCollector {
         catalog.registerClusterGauge("index_warmer_current_number", "Number of active index warmers", "index", "context");
         catalog.registerClusterGaugeUnit("index_warmer_time", "seconds", "Total time in seconds spent performing index warming operations", "index", "context");
         catalog.registerClusterGauge("index_warmer_count", "Total number of index warmers", "index", "context");
+
+        catalog.registerClusterGauge("index_node_mapping_total_count", "Number of mappings, including <<runtime,runtime>> and <<object,object>> fields");
+        catalog.registerClusterGaugeUnit("index_node_mapping_total_estimated_overhead", "bytes", "Estimated heap overhead, in bytes, of mappings on this node, which allows for 1kiB of heap for every mapped field.");
+
     }
 
     private void updatePerIndexMetrics(ClusterHealthResponse chr, IndicesStatsResponse isr) {
@@ -651,6 +662,11 @@ public class PrometheusMetricsCollector {
         catalog.setClusterGauge("index_warmer_current_number", idx.getWarmer().current(), indexName, context);
         catalog.setClusterGauge("index_warmer_time", idx.getWarmer().totalTimeInMillis() / 1E3, indexName, context);
         catalog.setClusterGauge("index_warmer_count", idx.getWarmer().total(), indexName, context);
+
+        if (idx.getNodeMappings() != null) {
+            catalog.setClusterGauge("index_node_mapping_total_count", idx.getNodeMappings().getTotalCount(), indexName, context);
+            catalog.setClusterGauge("index_node_mapping_total_estimated_overhead", idx.getNodeMappings().getTotalEstimatedOverhead().getBytes(), indexName, context);
+        }
     }
 
     @SuppressWarnings("checkstyle:LineLength")
