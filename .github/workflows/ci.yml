@@ -16,19 +16,22 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
+    - name: Configure sysctl limits
+      if: matrix.os == 'ubuntu-22.04'
+      run: |
+        sudo swapoff -a
+        sudo sysctl -w vm.swappiness=1
+        sudo sysctl -w fs.file-max=262144
+        sudo sysctl -w vm.max_map_count=262144
+
     - name: Checkout repository
       uses: actions/checkout@v3
-
-    - uses: actions/cache@v3
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
 
     - name: Set up JDK
       uses: actions/setup-java@v3
@@ -49,11 +52,11 @@ jobs:
         arguments: check
 
     - name: GitHub release
-      if: contains('refs/heads/master refs/heads/6.x refs/heads/7.x', github.ref)
+      if: contains('refs/heads/master refs/heads/7.x', github.ref) && matrix.os == 'ubuntu-22.04'
       run: |
         version=$(cat gradle.properties | grep -e "^version *=" | awk -F" *= *" '{print $NF}')
         is_snapshot=$(echo ${version} | grep -e "-SNAPSHOT$" | wc -l)
         if [ "$is_snapshot" == "0" ]; then
             echo ${{ github.token }} | gh auth login --with-token
-            gh release create ${version} ./build/distributions/*.zip -n "${version}" 
+            gh release create ${version} ./build/distributions/*.zip -n "${version}"
         fi
