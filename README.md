@@ -1,4 +1,4 @@
-![CI](https://github.com/vvanholl/elasticsearch-prometheus-exporter/workflows/CI/badge.svg?branch=master)
+[![CI](https://github.com/robkaandorp/elasticsearch-prometheus-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/robkaandorp/elasticsearch-prometheus-exporter/actions/workflows/ci.yml)
 
 # Prometheus Exporter Plugin for Elasticsearch
 
@@ -27,6 +27,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 
 | Elasticsearch  | Plugin         | Release date |
 | -------------- | -------------- | ------------ |
+| 7.17.9         | 7.17.9.0       | Feb 02, 2023 |
 | 7.17.8         | 7.17.8.0       | Dec 06, 2022 |
 | 7.17.7         | 7.17.7.0       | Oct 26, 2022 |
 | 7.17.6         | 7.17.6.0       | Aug 31, 2022 |
@@ -86,7 +87,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 
 ## Install
 
-`./bin/elasticsearch-plugin install -b https://github.com/vvanholl/elasticsearch-prometheus-exporter/releases/download/7.17.8.0/prometheus-exporter-7.17.8.0.zip`
+`./bin/elasticsearch-plugin install -b https://github.com/vvanholl/elasticsearch-prometheus-exporter/releases/download/7.17.9.0/prometheus-exporter-7.17.9.0.zip`
 
 **Do not forget to restart the node after the installation!**
 
