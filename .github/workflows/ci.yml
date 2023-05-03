@@ -29,12 +29,12 @@ jobs:
           java-version: "${{ env.java-version }}"
           distribution: "${{ env.java-distribution }}"
       - name: "Gradle build"
-        uses: "eskatos/gradle-command-action@v1"
+        uses: "gradle/gradle-build-action@v2"
         with:
           gradle-version: "${{ env.gradle-version }}"
           arguments: "--build-cache assemble"
       - name: "Gradle check"
-        uses: "eskatos/gradle-command-action@v1"
+        uses: "gradle/gradle-build-action@v2"
         with:
           gradle-version: "${{ env.gradle-version }}"
           arguments: "check"
