@@ -15,6 +15,7 @@ on:
 env:
   gradle-version: "7.4.1"
   java-version: "17"
+  java-distribution: "zulu"
 
 jobs:
   build:
@@ -26,6 +27,7 @@ jobs:
         uses: "actions/setup-java@v3"
         with:
           java-version: "${{ env.java-version }}"
+          distribution: "${{ env.java-distribution }}"
       - name: "Gradle build"
         uses: "eskatos/gradle-command-action@v1"
         with:
