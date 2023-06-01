@@ -31,7 +31,7 @@ plugins {
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'elasticsearch.esplugin'
-apply plugin: 'elasticsearch.yaml-rest-test'
+// apply plugin: 'elasticsearch.yaml-rest-test'
 apply plugin: 'elasticsearch.testclusters'
 
 // Uncomment if you want to use: System.out.println("Emergency!");
@@ -79,7 +79,7 @@ dependencies {
     implementation "io.prometheus:simpleclient:${versions.prometheus}"
     implementation "io.prometheus:simpleclient_common:${versions.prometheus}"
     implementation "io.prometheus:simpleclient_hotspot:${versions.prometheus}"
-    yamlRestTestRuntimeOnly "org.apache.logging.log4j:log4j-core:${versions.log4j}"
+    // yamlRestTestRuntimeOnly "org.apache.logging.log4j:log4j-core:${versions.log4j}"
     testImplementation (group: 'junit', name: 'junit', version: "${versions.junit}") {
     exclude group:'org.hamcrest' //also included in ES test framework
     }
