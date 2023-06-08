@@ -54,6 +54,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 
 | Elasticsearch | Plugin  | Release date |
 |---------------|---------|--------------|
+| 8.8.1         | 8.8.1.0 | Jun 08, 2023 |
 | 8.8.0         | 8.8.0.0 | May 25, 2023 |
 | 8.7.1         | 8.7.1.0 | May 05, 2023 |
 | 8.7.0         | 8.7.0.0 | Apr 26, 2023 |
@@ -87,7 +88,7 @@ It collects all relevant metrics and makes them available to Prometheus via the 
 
 ```
 ./bin/elasticsearch-plugin install -b \
-  https://github.com/mindw/elasticsearch-prometheus-exporter/releases/download/8.7.1.0/prometheus-exporter-8.7.1.0.zip
+  https://github.com/robkaandorp/elasticsearch-prometheus-exporter/releases/download/8.8.1.0/prometheus-exporter-8.8.1.0.zip
 ```
 
 **Do not forget to restart the node after the installation!**
@@ -184,7 +185,7 @@ framework.
 
 To run everything similar to the GitHub Actions pipeline you can do:
 ```
-docker run -v $(pwd):/home/gradle gradle:7.4.2-jdk17 su gradle -c 'gradle check'
+docker run -v $(pwd):/home/gradle gradle:8.1.1-jdk17 su gradle -c 'gradle check'
 ```
 NOTE: Please keep version in sync with `.github/workflows/ci.yml`
 
